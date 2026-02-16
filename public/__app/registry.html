@@ -178,8 +178,10 @@
         // Basic fields
         $("status_badge").textContent = entry.status || "active";
         setText("designation", entry.designation && entry.designation.title);
-        setText("inscription_name", entry.inscription && entry.inscription.name);
-        setText("inscription_motto", entry.inscription && entry.inscription.motto);
+        var ins = (entry.object && entry.object.inscription) ? entry.object.inscription : null;
+        setText("inscription_name", ins && ins.name);
+        setText("inscription_motto", ins && ins.motto);
+
 
         var dt = entry.recorded_at_utc || "";
         setText("recorded_at", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
