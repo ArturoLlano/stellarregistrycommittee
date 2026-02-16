@@ -10,6 +10,6 @@
 # -----------------------------
 # Canonical registry route (single renderer) — proxy, not redirect
 # -----------------------------
-/registry        /__app/registry.html 200
-/registry/       /__app/registry.html 200
-/registry/*      /__app/registry.html 200
+/registry     /__app/registry 200
+/registry/    /__app/registry 200
+/registry/*   /__app/registry 200
