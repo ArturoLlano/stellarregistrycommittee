@@ -6,6 +6,8 @@
     "title": "Example Registry Entry",
     "type": "commemorative"
   },
+  "recorded_by": { "display": "Registry Officer" },
+  "sponsor": { "display": "Anonymous" },
   "object": {
     "catalog": [
       { "scheme": "SAO", "id": "123456" }
