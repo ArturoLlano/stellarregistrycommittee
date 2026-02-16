@@ -33,12 +33,51 @@
   </footer>
 
   <script>
-    (function () {
-      // Expected path: /registry/<ID>
+  (function () {
+    function $(id) { return document.getElementById(id); }
+
+    function getIdFromPath() {
       var parts = location.pathname.split("/").filter(Boolean); // ["registry","<ID>"]
-      var id = (parts[0] === "registry" && parts[1]) ? parts[1] : "";
-      document.getElementById("rid").textContent = id || "—";
-    })();
-  </script>
+      return (parts[0] === "registry" && parts[1]) ? parts[1] : "";
+    }
+
+    function safeText(x) { return (x === undefined || x === null) ? "" : String(x); }
+
+    var id = getIdFromPath();
+    $("rid").textContent = id || "—";
+
+    if (!id) return;
+
+    var url = "/data/entries/" + encodeURIComponent(id) + ".json";
+
+    fetch(url, { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("Entry not found (" + r.status + ")");
+        return r.json();
+      })
+      .then(function (entry) {
+        // Minimal rendering for now (we’ll style it next)
+        var block = document.createElement("div");
+        block.style.marginTop = "16px";
+        block.innerHTML = ""
+          + "<h2 style='margin:16px 0 8px;'>Record Details</h2>"
+          + "<p><strong>Designation:</strong> " + safeText(entry.designation && entry.designation.title) + "</p>"
+          + "<p><strong>Epoch:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.epoch) + "</p>"
+          + "<p><strong>RA:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms) + "</p>"
+          + "<p><strong>Dec:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms) + "</p>"
+          + "<p><strong>SAO:</strong> " + safeText((entry.object && entry.object.catalog && entry.object.catalog[0] && entry.object.catalog[0].scheme === "SAO") ? entry.object.catalog[0].id : "") + "</p>";
+
+        document.querySelector("main").appendChild(block);
+      })
+      .catch(function (err) {
+        var msg = document.createElement("p");
+        msg.style.marginTop = "16px";
+        msg.className = "muted";
+        msg.textContent = "No registry data file found for this ID yet.";
+        document.querySelector("main").appendChild(msg);
+      });
+  })();
+</script>
+
 </body>
 </html>
