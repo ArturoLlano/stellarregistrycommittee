@@ -11,7 +11,7 @@
 # -----------------------------
 # Canonical registry route (single renderer)
 # -----------------------------
-/registry            /_app/registry 200
-/registry/           /_app/registry 200
-/registry/index.html /_app/registry 200
-/registry/*          /_app/registry 200
+/registry            /__app/registry 200
+/registry/           /__app/registry 200
+/registry/index.html /__app/registry 200
+/registry/*          /__app/registry 200
