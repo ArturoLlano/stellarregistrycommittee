@@ -50,6 +50,11 @@
           <div class="kv__k">Record ID</div>
           <div class="kv__v"><code id="record_id">—</code></div>
         </div>
+        
+        <div class="kv__row">
+          <div class="kv__k">Canonical URL</div>
+          <div class="kv__v"><code id="canonical_url">—</code></div>
+        </div>
 
         <div class="kv__row">
           <div class="kv__k">Designation</div>
@@ -85,8 +90,9 @@
 
         <div class="kv__row">
           <div class="kv__k">QR resolver path</div>
-          <div class="kv__v"><code id="qr_path">—</code></div>
+          <div class="kv__v"><a id="qr_link" href="#"><code id="qr_path">—</code></a></div>
         </div>
+
 
         <div class="kv__row">
           <div class="kv__k">Entry file</div>
@@ -140,7 +146,10 @@
 
     var id = getIdFromPath();
     setText("record_id", id);
+    setText("canonical_url", id ? (location.origin + "/registry/" + id) : "");
     setText("qr_path", id ? ("/r/" + id) : "");
+    var qrl = $("qr_link");
+    if (qrl && id) qrl.setAttribute("href", "/r/" + encodeURIComponent(id));
     setText("entry_path", id ? ("/data/entries/" + id + ".json") : "");
 
     if(!id){
