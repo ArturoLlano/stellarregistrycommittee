@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entry Builder — The Stellar Registry Committee</title>
+  <style>
+    :root{--line:#e7e7e7;--muted:#5b5b5b;--bg:#fafafa;--panel:#fff;--radius:14px;--max:980px}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#111;background:var(--bg)}
+    header,main,footer{max-width:var(--max);margin:0 auto;padding:20px}
+    header{padding-top:26px}
+    h1{margin:6px 0 0;font-size:28px}
+    .muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+    label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+    input,select,textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid var(--line);font:inherit;background:#fff}
+    textarea{min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{font:inherit;padding:10px 12px;border-radius:12px;border:1px solid #bdbdbd;background:#fff;cursor:pointer}
+    button:hover{border-color:#888}
+    .ok{color:#0b6b2a}
+    .bad{color:#8a1f1f}
+    code{background:#f0f0f0;padding:2px 6px;border-radius:8px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="muted" style="letter-spacing:.08em;text-transform:uppercase;font-size:12px;">The Stellar Registry Committee</div>
+  <h1>Entry Builder (Phase 1)</h1>
+  <p class="muted" style="max-width:80ch;margin:10px 0 0;">
+    Generates a <code>public/data/entries/&lt;ID&gt;.json</code> file. Publish by committing to GitHub (admin workflow).
+    This tool is intended to be opened locally and should not be deployed.
+  </p>
+</header>
+
+<main class="grid">
+  <section class="card">
+    <h2 style="margin:0 0 12px;font-size:16px;">Record fields</h2>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div>
+        <label for="id">Record ID</label>
+        <input id="id" placeholder="EXAMPLE-0002" />
+      </div>
+      <div>
+        <label for="status">Status</label>
+        <select id="status">
+          <option value="active">active</option>
+          <option value="archived">archived</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="recorded">Recorded at (UTC)</label>
+        <input id="recorded" placeholder="2026-02-16T00:00:00Z" />
+      </div>
+      <div>
+        <label for="epoch">Epoch</label>
+        <input id="epoch" value="J2000" />
+      </div>
+
+      <div>
+        <label for="designation">Designation (title)</label>
+        <input id="designation" placeholder="Example Registry Entry" />
+      </div>
+      <div>
+        <label for="dtype">Designation type</label>
+        <select id="dtype">
+          <option value="commemorative">commemorative</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="ra">RA (H M S.s)</label>
+        <input id="ra" placeholder="12 34 56.7" />
+      </div>
+      <div>
+        <label for="dec">Dec (±D M S)</label>
+        <input id="dec" placeholder="+12 34 56" />
+      </div>
+
+      <div>
+        <label for="sao">SAO number</label>
+        <input id="sao" placeholder="123456" />
+      </div>
+      <div>
+        <label for="disc">Disclaimer ref</label>
+        <input id="disc" value="/legal/disclaimer/" />
+      </div>
+
+      <div>
+        <label for="iname">Inscribed name</label>
+        <input id="iname" placeholder="Lucia" />
+      </div>
+      <div>
+        <label for="insc">Inscription</label>
+        <input id="insc" placeholder="Ad lucem." />
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label for="notes">Notes (one per line)</label>
+      <textarea id="notes" placeholder="This is a Phase 1 entry."></textarea>
+    </div>
+
+    <div class="row">
+      <button type="button" id="btnNow">Set Recorded At = now (UTC)</button>
+      <button type="button" id="btnGenerate">Generate JSON</button>
+      <button type="button" id="btnCopy" disabled>Copy JSON</button>
+    </div>
+
+    <p id="msg" class="muted" style="margin:12px 0 0;"></p>
+    <p class="muted" style="margin:8px 0 0;">
+      Preview URLs (after you commit): <span class="mono" id="preview">—</span>
+    </p>
+  </section>
+
+  <section class="card">
+    <h2 style="margin:0 0 12px;font-size:16px;">Generated file</h2>
+
+    <p class="muted" style="margin:0 0 10px;">
+      Create this file in GitHub: <code id="path">public/data/entries/&lt;ID&gt;.json</code>
+    </p>
+
+    <textarea id="out" spellcheck="false" class="mono" placeholder="(click Generate JSON)"></textarea>
+
+    <div class="row">
+      <button type="button" id="btnCopyPath" disabled>Copy file path</button>
+      <button type="button" id="btnCopyQR" disabled>Copy QR URL (/r/&lt;ID&gt;)</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p class="muted" style="margin:0;">
+    Phase 1 publishing: GitHub commit → Cloudflare Pages deploy → test <code>/registry/&lt;ID&gt;</code> and <code>/r/&lt;ID&gt;</code>.
+  </p>
+</footer>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+
+  function nowUtcIso(){
+    const d = new Date();
+    // ISO like 2026-02-16T00:00:00Z
+    return d.toISOString().replace(/\.\d{3}Z$/, "Z");
+  }
+
+  function isValidId(id){
+    // conservative: A-Z 0-9 dash only, 3..64 chars
+    return /^[A-Z0-9-]{3,64}$/.test(id);
+  }
+
+  function parseHms(s){
+    const p = String(s||"").trim().split(/\s+/);
+    if(p.length !== 3) return null;
+    const h = Number(p[0]), m = Number(p[1]), sec = Number(p[2]);
+    if(!Number.isFinite(h)||!Number.isFinite(m)||!Number.isFinite(sec)) return null;
+    if(h<0||h>23) return null;
+    if(m<0||m>59) return null;
+    if(sec<0||sec>=60) return null;
+    return {h,m,sec};
+  }
+
+  function parseDms(s){
+    const p = String(s||"").trim().split(/\s+/);
+    if(p.length !== 3) return null;
+    const d = Number(p[0]), m = Number(p[1]), sec = Number(p[2]);
+    if(!Number.isFinite(d)||!Number.isFinite(m)||!Number.isFinite(sec)) return null;
+    if(m<0||m>59) return null;
+    if(sec<0||sec>=60) return null;
+    if(Math.abs(d) > 90) return null;
+    return {d,m,sec};
+  }
+
+  function linesToArray(txt){
+    return String(txt||"").split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function setMsg(text, ok){
+    $("msg").textContent = text;
+    $("msg").className = ok ? "ok" : "bad";
+  }
+
+  function build(){
+    const id = $("id").value.trim().toUpperCase();
+    const status = $("status").value.trim();
+    const recorded = $("recorded").value.trim();
+    const epoch = $("epoch").value.trim() || "J2000";
+    const designation = $("designation").value.trim();
+    const dtype = $("dtype").value.trim();
+    const ra = $("ra").value.trim();
+    const dec = $("dec").value.trim();
+    const sao = $("sao").value.trim();
+    const disc = $("disc").value.trim() || "/legal/disclaimer/";
+    const iname = $("iname").value.trim();
+    const insc = $("insc").value.trim();
+    const notes = linesToArray($("notes").value);
+
+    if(!isValidId(id)) return {err:"Invalid ID. Use only A–Z, 0–9, and hyphen (e.g., EXAMPLE-0002)."};
+    if(!designation) return {err:"Designation title is required."};
+    if(!recorded) return {err:"Recorded at (UTC) is required (use the button to fill it)."};
+    if(!parseHms(ra)) return {err:"RA must be: H M S.s (e.g., 12 34 56.7) with valid ranges."};
+    if(!parseDms(dec)) return {err:"Dec must be: ±D M S (e.g., +12 34 56) with valid ranges."};
+    if(!/^\d+$/.test(sao)) return {err:"SAO must be numeric (digits only)."};
+    if(!iname) return {err:"Inscribed name is required."};
+    if(!insc) return {err:"Inscription is required."};
+
+    const entry = {
+      id,
+      status,
+      recorded_at_utc: recorded,
+      designation: { title: designation, type: dtype },
+      object: {
+        catalog: [{ scheme: "SAO", id: sao }],
+        inscription: { name: iname, motto: insc },
+        coordinates: { epoch, ra_hms: ra, dec_dms: dec }
+      },
+      notes,
+      legal: { disclaimer_ref: disc }
+    };
+
+    return {id, entry};
+  }
+
+  $("btnNow").addEventListener("click", () => {
+    $("recorded").value = nowUtcIso();
+    setMsg("Recorded at set to current UTC time.", true);
+  });
+
+  $("btnGenerate").addEventListener("click", () => {
+    const r = build();
+    if(r.err){
+      $("out").value = "";
+      $("btnCopy").disabled = true;
+      $("btnCopyPath").disabled = true;
+      $("btnCopyQR").disabled = true;
+      $("preview").textContent = "—";
+      $("path").textContent = "public/data/entries/<ID>.json";
+      setMsg(r.err, false);
+      return;
+    }
+
+    $("out").value = JSON.stringify(r.entry, null, 2) + "\n";
+    $("path").textContent = "public/data/entries/" + r.id + ".json";
+    $("preview").textContent = "/registry/" + r.id + "  |  /r/" + r.id;
+
+    $("btnCopy").disabled = false;
+    $("btnCopyPath").disabled = false;
+    $("btnCopyQR").disabled = false;
+
+    setMsg("JSON generated. Next: create the file in GitHub and commit.", true);
+  });
+
+  $("btnCopy").addEventListener("click", async () => {
+    await navigator.clipboard.writeText($("out").value);
+    setMsg("JSON copied to clipboard.", true);
+  });
+
+  $("btnCopyPath").addEventListener("click", async () => {
+    await navigator.clipboard.writeText($("path").textContent);
+    setMsg("File path copied.", true);
+  });
+
+  $("btnCopyQR").addEventListener("click", async () => {
+    const id = $("id").value.trim().toUpperCase();
+    await navigator.clipboard.writeText("/r/" + id);
+    setMsg("QR target path copied: /r/" + id, true);
+  });
+})();
+</script>
+</body>
+</html>
