@@ -1,9 +1,9 @@
 # -----------------------------
 # Resolver landing (no ID)
 # -----------------------------
-/r              /_app/resolver 200
-/r/             /_app/resolver 200
-/r/index.html   /_app/resolver 200
+/r              /r/index.html 200
+/r/             /r/index.html 200
+/r/index.html   /r/index.html 200
 
 # QR permanence: /r/<ID> -> canonical
 /r/*            /registry/:splat 301
