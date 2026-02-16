@@ -60,6 +60,16 @@
           <div class="kv__k">Designation</div>
           <div class="kv__v" id="designation">—</div>
         </div>
+        
+        <div class="kv__row">
+          <div class="kv__k">Inscribed name</div>
+          <div class="kv__v" id="inscription_name">—</div>
+        </div>
+        
+        <div class="kv__row">
+          <div class="kv__k">Motto</div>
+          <div class="kv__v" id="inscription_motto">—</div>
+        </div>
 
         <div class="kv__row">
           <div class="kv__k">Recorded at (UTC)</div>
@@ -168,6 +178,9 @@
         // Basic fields
         $("status_badge").textContent = entry.status || "active";
         setText("designation", entry.designation && entry.designation.title);
+        setText("inscription_name", entry.inscription && entry.inscription.name);
+        setText("inscription_motto", entry.inscription && entry.inscription.motto);
+
         var dt = entry.recorded_at_utc || "";
         setText("recorded_at", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
         setText("epoch", entry.object && entry.object.coordinates && entry.object.coordinates.epoch);
