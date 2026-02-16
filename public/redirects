@@ -1,0 +1,18 @@
+# -----------------------------
+# QR permanence
+# -----------------------------
+/r     /r/index.html 200
+/r/    /r/index.html 200
+/r/*   /registry/:splat 301
+
+# -----------------------------
+# Canonical registry route (single renderer)
+# -----------------------------
+/registry     /registry/index.html 200
+/registry/    /registry/index.html 200
+/registry/*   /registry/index.html 200
+
+# -----------------------------
+# Fallback
+# -----------------------------
+/* /404.html 404
