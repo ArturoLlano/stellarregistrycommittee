@@ -178,9 +178,14 @@
         // Basic fields
         $("status_badge").textContent = entry.status || "active";
         setText("designation", entry.designation && entry.designation.title);
-        var ins = (entry.object && entry.object.inscription) ? entry.object.inscription : null;
+
+        var ins = (entry.object && entry.object.inscription)
+          ? entry.object.inscription
+          : (entry.inscription || null);
+        
         setText("inscription_name", ins && ins.name);
         setText("inscription_motto", ins && ins.motto);
+
 
 
         var dt = entry.recorded_at_utc || "";
