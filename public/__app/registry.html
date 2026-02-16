@@ -77,6 +77,16 @@
         </div>
 
         <div class="kv__row">
+          <div class="kv__k">Recorded by</div>
+          <div class="kv__v" id="recorded_by">—</div>
+        </div>
+        
+        <div class="kv__row">
+          <div class="kv__k">Sponsor</div>
+          <div class="kv__v" id="sponsor">—</div>
+        </div>
+
+        <div class="kv__row">
           <div class="kv__k">Epoch</div>
           <div class="kv__v" id="epoch">—</div>
         </div>
@@ -182,6 +192,10 @@
         var ins = (entry.object && entry.object.inscription)
           ? entry.object.inscription
           : (entry.inscription || null);
+
+        setText("recorded_by", entry.recorded_by && entry.recorded_by.display);
+        setText("sponsor", entry.sponsor && entry.sponsor.display);
+
         
         setText("inscription_name", ins && ins.name);
         setText("inscription_motto", ins && ins.motto);
