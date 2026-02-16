@@ -1,11 +1,15 @@
+# -----------------------------
 # Resolver landing (no ID)
-/r            /r/index.html 200
-/r/           /r/index.html 200
+# -----------------------------
+/r              /r/index.html 200
+/r/             /r/index.html 200
 
 # QR permanence: /r/<ID> -> canonical
-/r/*          /registry/:splat 301
+/r/*            /registry/:splat 302
 
-# Canonical registry route (single renderer)
-/registry     /__app/registry.html 200
-/registry/    /__app/registry.html 200
-/registry/*   /__app/registry.html 200
+# -----------------------------
+# Canonical registry route (single renderer) — proxy, not redirect
+# -----------------------------
+/registry        /__app/registry.html 200
+/registry/       /__app/registry.html 200
+/registry/*      /__app/registry.html 200
