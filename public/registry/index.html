@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registry Record — The Stellar Registry Committee</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;line-height:1.5}
+    header,main,footer{max-width:920px;margin:0 auto;padding:24px}
+    header{border-bottom:1px solid #e6e6e6}
+    footer{border-top:1px solid #e6e6e6;color:#555;font-size:14px}
+    .muted{color:#666}
+    code{background:#f5f5f5;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="muted">The Stellar Registry Committee</div>
+    <h1 style="margin:8px 0 0 0;">Registry Record</h1>
+  </header>
+
+  <main>
+    <p class="muted" style="margin-top:0;">This is a private commemorative registry record (not affiliated with the IAU).</p>
+    <p>Record ID: <code id="rid">—</code></p>
+    <p class="muted">Placeholder page. Next step: load entry data from <code>/data/entries/&lt;ID&gt;.json</code>.</p>
+  </main>
+
+  <footer>
+    <a href="/legal/disclaimer/" class="muted">Disclaimer</a>
+  </footer>
+
+  <script>
+    (function () {
+      // Supports /registry/<ID> via redirects that proxy to this file
+      var parts = location.pathname.split("/").filter(Boolean); // ["registry","<ID>"]
+      var id = (parts[0] === "registry" && parts[1]) ? parts[1] : "";
+      document.getElementById("rid").textContent = id || "—";
+    })();
+  </script>
+</body>
+</html>
