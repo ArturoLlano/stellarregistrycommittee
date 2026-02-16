@@ -2,11 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Stellar Registry Committee</title>
+  <meta name="description" content="A private commemorative registry of symbolic star dedications, presented as formal records with standardized astronomical fields." />
+  <link rel="stylesheet" href="/assets/css/site.css" />
 </head>
-<body style="font-family:system-ui; padding:24px">
-  <h1>The Stellar Registry Committee</h1>
-  <p>Deployment test.</p>
+<body>
+  <header class="header">
+    <div class="wrap">
+      <div class="brand">
+        <div class="brand__name">The Stellar Registry Committee</div>
+        <nav class="brand__nav">
+          <a href="/legal/disclaimer/">Disclaimer</a>
+          <a href="/r/">Resolver</a>
+        </nav>
+      </div>
+      <h1 class="h1">Private Commemorative Registry</h1>
+      <p class="lede">
+        Formal registry records for symbolic dedications. Entries are presented with standardized astronomical fields
+        (RA/Dec, epoch, and catalog references when available).
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <form data-record-lookup>
+        <label class="label" for="record_id">Find a record by Registry ID</label>
+        <div class="row">
+          <input class="input" id="record_id" name="record_id" placeholder="e.g., EXAMPLE-0001" autocomplete="off" />
+          <button class="btn btn--primary" type="submit">Open record</button>
+        </div>
+        <div class="note" data-msg></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 style="margin:0 0 8px;">Standards & permanence</h2>
+      <ul style="margin:0; padding-left:18px;">
+        <li>QR codes resolve via <code>/r/&lt;ID&gt;</code> to the canonical record at <code>/registry/&lt;ID&gt;</code>.</li>
+        <li>Records present coordinates as RA (h m s) and Dec (° ′ ″), with epoch stated (e.g., J2000).</li>
+        <li>Catalog references (e.g., SAO) are stored as structured fields for future interoperability.</li>
+      </ul>
+      <p class="note" style="margin-top:10px;">
+        This is a private commemorative registry and is not affiliated with the International Astronomical Union (IAU).
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="small">© The Stellar Registry Committee. Private commemorative registry.</div>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/js/pages/home.js"></script>
 </body>
 </html>
