@@ -6,89 +6,224 @@
   <title>Registry Record — The Stellar Registry Committee</title>
   <meta name="robots" content="noindex" />
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;line-height:1.5}
-    header,main,footer{max-width:920px;margin:0 auto;padding:24px}
-    header{border-bottom:1px solid #e6e6e6}
-    footer{border-top:1px solid #e6e6e6;color:#555;font-size:14px}
-    .muted{color:#666}
-    code{background:#f5f5f5;padding:2px 6px;border-radius:6px}
+    :root{
+      --line:#e7e7e7;
+      --muted:#5b5b5b;
+      --panel:#f7f7f7;
+      --accent:#0b3a6a;
+      --radius:14px;
+      --max:920px;
+    }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;line-height:1.55;color:#111;background:#fff}
+    header,main,footer{max-width:var(--max);margin:0 auto;padding:24px}
+    header{border-bottom:1px solid var(--line)}
+    footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+    .muted{color:var(--muted)}
+    .brand{letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+    .h1{margin:10px 0 0;font-size:40px;letter-spacing:-.02em}
+    .lede{margin:10px 0 0;color:var(--muted);max-width:70ch}
+    .card{margin-top:20px;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+    a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f0f0f0;padding:2px 6px;border-radius:8px}
+    .badge{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+    #internalNotice{display:none;color:var(--muted);margin-top:10px}
   </style>
+  <link rel="stylesheet" href="/assets/css/registry.css" />
 </head>
 <body>
   <header>
-    <div class="muted">The Stellar Registry Committee</div>
-    <h1 style="margin:8px 0 0 0;">Registry Record</h1>
+    <div class="brand muted">The Stellar Registry Committee</div>
+    <h1 class="h1">Registry Record</h1>
+    <p class="lede" id="status_text">Private commemorative registry record (not affiliated with the IAU).</p>
+    <p id="internalNotice">
+      Internal renderer endpoint. Use <code>/registry/&lt;ID&gt;</code> or <code>/r/&lt;ID&gt;</code>.
+    </p>
+    <div style="margin-top:10px;">
+      <span class="badge" id="status_badge">active</span>
+    </div>
   </header>
 
   <main>
-    <p class="muted" style="margin-top:0;">
-      Private commemorative registry record (not affiliated with the IAU).
-    </p>
-    <p id="internalNotice" style="display:none; color:#666; margin-top:0;">
-      Internal renderer endpoint. Use <code>/registry/&lt;ID&gt;</code> or <code>/r/&lt;ID&gt;</code>.
-    </p>
+    <section class="card">
+      <div class="kv" role="table" aria-label="Registry record fields">
+        <div class="kv__row">
+          <div class="kv__k">Record ID</div>
+          <div class="kv__v"><code id="record_id">—</code></div>
+        </div>
 
-    <p>Record ID: <code id="rid">—</code></p>
-    <p class="muted">Next step: load data from <code>/data/entries/&lt;ID&gt;.json</code>.</p>
+        <div class="kv__row">
+          <div class="kv__k">Designation</div>
+          <div class="kv__v" id="designation">—</div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Recorded at (UTC)</div>
+          <div class="kv__v" id="recorded_at">—</div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Epoch</div>
+          <div class="kv__v" id="epoch">—</div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Right Ascension</div>
+          <div class="kv__v">
+            <div><span class="muted">raw:</span> <code id="ra_raw">—</code></div>
+            <div><span class="muted">formatted:</span> <span id="ra_fmt">—</span></div>
+          </div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Declination</div>
+          <div class="kv__v">
+            <div><span class="muted">raw:</span> <code id="dec_raw">—</code></div>
+            <div><span class="muted">formatted:</span> <span id="dec_fmt">—</span></div>
+          </div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Catalog reference</div>
+          <div class="kv__v" id="catalog_ref">—</div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">QR resolver path</div>
+          <div class="kv__v"><code id="qr_path">—</code></div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Entry file</div>
+          <div class="kv__v"><code id="entry_path">—</code></div>
+        </div>
+
+        <div class="kv__row">
+          <div class="kv__k">Notes</div>
+          <div class="kv__v">
+            <ul id="notes" style="margin:0; padding-left:18px;"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="button" id="btnCopy">Copy canonical link</button>
+        <button class="btn" type="button" id="btnPrint">Print record</button>
+      </div>
+
+      <p class="muted" style="margin:14px 0 0;">
+        This registry is private and commemorative in nature and is not affiliated with the International Astronomical Union (IAU).
+      </p>
+    </section>
   </main>
 
   <footer>
     <a href="/" class="muted">Home</a>
+    <span class="muted"> · </span>
+    <a href="/legal/disclaimer/" class="muted">Disclaimer</a>
   </footer>
 
   <script>
-(function () {
-  function $(id) { return document.getElementById(id); }
+  (function(){
+    function $(id){ return document.getElementById(id); }
+    function setText(id, v){ var el=$(id); if(el) el.textContent = (v===undefined||v===null||v==="") ? "—" : String(v); }
+    function splitParts(s){ return String(s||"").trim().replace(/\s+/g," ").split(" "); }
+    function formatRaHms(s){ var p=splitParts(s); return (p.length>=3) ? (p[0]+"h "+p[1]+"m "+p[2]+"s") : String(s||""); }
+    function formatDecDms(s){ var p=splitParts(s); return (p.length>=3) ? (p[0]+"° "+p[1]+"′ "+p[2]+"″") : String(s||""); }
 
-  // Show internal notice when someone visits /__app/* directly
-  if (location.pathname.startsWith("/__app/")) {
-    var n = $("internalNotice");
-    if (n) n.style.display = "block";
-  }
+    // Show internal notice when someone visits /__app/* directly
+    if (location.pathname.startsWith("/__app/")) {
+      var n = $("internalNotice");
+      if (n) n.style.display = "block";
+    }
 
-  function getIdFromPath() {
-    var parts = location.pathname.split("/").filter(Boolean); // ["registry","<ID>"]
-    return (parts[0] === "registry" && parts[1]) ? parts[1] : "";
-  }
+    // Extract ID only from canonical route /registry/<ID>
+    function getIdFromPath(){
+      var parts = location.pathname.split("/").filter(Boolean); // ["registry","<ID>"]
+      return (parts[0]==="registry" && parts[1]) ? parts[1] : "";
+    }
 
-  function safeText(x) { return (x === undefined || x === null) ? "" : String(x); }
+    var id = getIdFromPath();
+    setText("record_id", id);
+    setText("qr_path", id ? ("/r/" + id) : "");
+    setText("entry_path", id ? ("/data/entries/" + id + ".json") : "");
 
-  var id = getIdFromPath();
-  $("rid").textContent = id || "—";
+    if(!id){
+      $("status_badge").textContent = "internal";
+      return;
+    }
 
-  // If user is on /__app/registry (no ID), stop here.
-  if (!id) return;
+    var url = "/data/entries/" + encodeURIComponent(id) + ".json";
 
-  var url = "/data/entries/" + encodeURIComponent(id) + ".json";
+    fetch(url, { cache: "no-store" })
+      .then(function(r){
+        if(!r.ok) throw new Error("not found");
+        return r.json();
+      })
+      .then(function(entry){
+        // Basic fields
+        $("status_badge").textContent = entry.status || "active";
+        setText("designation", entry.designation && entry.designation.title);
+        setText("recorded_at", entry.recorded_at_utc);
+        setText("epoch", entry.object && entry.object.coordinates && entry.object.coordinates.epoch);
 
-  fetch(url, { cache: "no-store" })
-    .then(function (r) {
-      if (!r.ok) throw new Error("Entry not found (" + r.status + ")");
-      return r.json();
-    })
-    .then(function (entry) {
-      var block = document.createElement("div");
-      block.style.marginTop = "16px";
-      block.innerHTML = ""
-        + "<h2 style='margin:16px 0 8px;'>Record Details</h2>"
-        + "<p><strong>Designation:</strong> " + safeText(entry.designation && entry.designation.title) + "</p>"
-        + "<p><strong>Epoch:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.epoch) + "</p>"
-        + "<p><strong>RA:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms) + "</p>"
-        + "<p><strong>Dec:</strong> " + safeText(entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms) + "</p>"
-        + "<p><strong>SAO:</strong> " + safeText((entry.object && entry.object.catalog && entry.object.catalog[0] && entry.object.catalog[0].scheme === "SAO") ? entry.object.catalog[0].id : "") + "</p>";
+        var ra = entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
+        var dec = entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
 
-      document.querySelector("main").appendChild(block);
-    })
-    .catch(function () {
-      var msg = document.createElement("p");
-      msg.style.marginTop = "16px";
-      msg.className = "muted";
-      msg.textContent = "No registry data file found for this ID yet.";
-      document.querySelector("main").appendChild(msg);
-    });
-})();
-</script>
+        setText("ra_raw", ra);
+        setText("dec_raw", dec);
+        setText("ra_fmt", ra ? formatRaHms(ra) : "");
+        setText("dec_fmt", dec ? formatDecDms(dec) : "");
 
+        // Catalog ref (prefer SAO if present)
+        var cat = (entry.object && entry.object.catalog) ? entry.object.catalog : [];
+        var sao = null;
+        for(var i=0;i<cat.length;i++){
+          if(cat[i] && cat[i].scheme==="SAO"){ sao = cat[i]; break; }
+        }
+        setText("catalog_ref", sao ? ("SAO " + sao.id) : "");
 
+        // Notes list
+        var notes = entry.notes || [];
+        var ul = $("notes");
+        if(ul){
+          ul.innerHTML = "";
+          if(!notes.length){
+            var li = document.createElement("li");
+            li.textContent = "—";
+            ul.appendChild(li);
+          }else{
+            notes.forEach(function(n){
+              var li = document.createElement("li");
+              li.textContent = String(n);
+              ul.appendChild(li);
+            });
+          }
+        }
+      })
+      .catch(function(){
+        $("status_badge").textContent = "not found";
+        $("status_text").textContent = "No data file exists for this record ID yet.";
+      });
+
+    // Actions
+    var btnCopy = $("btnCopy");
+    if(btnCopy){
+      btnCopy.addEventListener("click", function(){
+        var canonical = location.origin + "/registry/" + encodeURIComponent(id);
+        navigator.clipboard.writeText(canonical).then(function(){
+          btnCopy.textContent = "Copied";
+          setTimeout(function(){ btnCopy.textContent = "Copy canonical link"; }, 1200);
+        }).catch(function(){
+          btnCopy.textContent = "Copy failed";
+          setTimeout(function(){ btnCopy.textContent = "Copy canonical link"; }, 1200);
+        });
+      });
+    }
+    var btnPrint = $("btnPrint");
+    if(btnPrint){
+      btnPrint.addEventListener("click", function(){ window.print(); });
+    }
+  })();
+  </script>
 </body>
 </html>
