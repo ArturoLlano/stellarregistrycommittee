@@ -67,20 +67,16 @@
         </div>
 
         <div class="kv__row">
-          <div class="kv__k">Right Ascension</div>
-          <div class="kv__v">
-            <div><span class="muted">raw:</span> <code id="ra_raw">—</code></div>
-            <div><span class="muted">formatted:</span> <span id="ra_fmt">—</span></div>
-          </div>
+          <div class="kv__k">Right Ascension (J2000)</div>
+          <div class="kv__v"><span id="ra_fmt">—</span></div>
         </div>
 
+
         <div class="kv__row">
-          <div class="kv__k">Declination</div>
-          <div class="kv__v">
-            <div><span class="muted">raw:</span> <code id="dec_raw">—</code></div>
-            <div><span class="muted">formatted:</span> <span id="dec_fmt">—</span></div>
-          </div>
+          <div class="kv__k">Declination (J2000)</div>
+          <div class="kv__v"><span id="dec_fmt">—</span></div>
         </div>
+
 
         <div class="kv__row">
           <div class="kv__k">Catalog reference</div>
@@ -163,16 +159,16 @@
         // Basic fields
         $("status_badge").textContent = entry.status || "active";
         setText("designation", entry.designation && entry.designation.title);
-        setText("recorded_at", entry.recorded_at_utc);
+        var dt = entry.recorded_at_utc || "";
+        setText("recorded_at", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
         setText("epoch", entry.object && entry.object.coordinates && entry.object.coordinates.epoch);
 
         var ra = entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
         var dec = entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
-
-        setText("ra_raw", ra);
-        setText("dec_raw", dec);
+        
         setText("ra_fmt", ra ? formatRaHms(ra) : "");
         setText("dec_fmt", dec ? formatDecDms(dec) : "");
+
 
         // Catalog ref (prefer SAO if present)
         var cat = (entry.object && entry.object.catalog) ? entry.object.catalog : [];
