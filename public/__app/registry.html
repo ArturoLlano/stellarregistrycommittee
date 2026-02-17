@@ -102,9 +102,9 @@
           <div class="kv__v"><span id="dec_fmt">—</span></div>
         </div>
 
-        <div id="row-constellation" style="display:none;">
-          <dt>Constellation</dt>
-          <dd id="field-constellation"></dd>
+        <div class="kv__row" id="row-constellation" style="display:none;">
+          <div class="kv__k">Constellation</div>
+          <div class="kv__v" id="field-constellation">—</div>
         </div>
 
         <div class="kv__row">
@@ -215,6 +215,24 @@
         
         setText("ra_fmt", ra ? formatRaHms(ra) : "");
         setText("dec_fmt", dec ? formatDecDms(dec) : "");
+        
+        // Constellation (optional)
+        var cons = entry && entry.object && entry.object.context && entry.object.context.constellation;
+        var rowCons = $("row-constellation");
+        var fieldCons = $("field-constellation");
+        
+        if (rowCons && fieldCons) {
+          if (cons && (cons.name || cons.iau_abbrev)) {
+            var label = (cons.name && cons.iau_abbrev)
+              ? (cons.name + " (" + cons.iau_abbrev + ")")
+              : (cons.name || cons.iau_abbrev);
+        
+            fieldCons.textContent = label;
+            rowCons.style.display = "";
+          } else {
+            rowCons.style.display = "none";
+          }
+        }
 
 
         // Catalog ref (prefer SAO if present)
