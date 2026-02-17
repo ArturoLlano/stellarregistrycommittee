@@ -44,6 +44,14 @@ from typing import List, Optional, Tuple
 
 import requests
 
+try:
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+except Exception:
+    SkyCoord = None
+    u = None
+
+
 VIZIER_ASU_TSV = "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
 VIZIER_TABLE = "I/131A/sao"
 
@@ -174,6 +182,18 @@ def validate_formats(ra_hms: str, dec_dms: str) -> None:
     if not DEC_DMS_RE.match(dec_dms):
         raise ValueError(f"dec_dms inválida: {dec_dms!r}")
 
+def compute_constellation_iau(ra_hours: float, dec_deg: float) -> Optional[dict]:
+    """
+    Devuelve constelación IAU a partir de coordenadas (ICRS/J2000),
+    usando los límites IAU (implementación Astropy).
+    """
+    if SkyCoord is None or u is None:
+        return None
+
+    c = SkyCoord(ra=ra_hours * u.hourangle, dec=dec_deg * u.deg, frame="icrs")
+    iau_abbrev = c.get_constellation(short_name=True)   # ej: "UMi"
+    full_name = c.get_constellation(short_name=False)   # ej: "Ursa Minor"
+    return {"iau_abbrev": iau_abbrev, "name": full_name}
 
 def vizier_lookup_sao(sao: int, timeout_s: int = 20, retries: int = 2) -> Tuple[str, str]:
     """
@@ -256,8 +276,16 @@ def vizier_lookup_sao(sao: int, timeout_s: int = 20, retries: int = 2) -> Tuple[
     raise RuntimeError(f"Fallo consulta VizieR: {last}")
 
 
-def build_entry(entry_id: str, sao: int, name: str, motto: str, ra_hms: str, dec_dms: str) -> dict:
-    return {
+def build_entry(
+    entry_id: str,
+    sao: int,
+    name: str,
+    motto: str,
+    ra_hms: str,
+    dec_dms: str,
+    constellation: Optional[dict],
+) -> dict:
+    entry = {
         "id": entry_id,
         "status": "active",
         "recorded_at_utc": iso_utc_now(),
@@ -270,6 +298,13 @@ def build_entry(entry_id: str, sao: int, name: str, motto: str, ra_hms: str, dec
         "notes": ["Coordinates retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."],
         "legal": {"disclaimer_ref": "/legal/disclaimer/"},
     }
+
+    # Agrega constelación solo si existe (mantiene JSON limpio)
+    if constellation:
+        entry["object"]["context"] = {"constellation": constellation}
+
+    return entry
+
 
 
 def run_git(repo_root: Path, args: List[str]) -> subprocess.CompletedProcess:
@@ -336,6 +371,7 @@ def main() -> int:
 
     ra_hours = parse_ra_to_hours(ra_raw)
     dec_deg = parse_dec_to_deg(dec_raw)
+    constellation = compute_constellation_iau(ra_hours, dec_deg)
     ra_hms = hours_to_ra_hms(ra_hours, sec_precision=1)
     dec_dms = deg_to_dec_dms(dec_deg)
     validate_formats(ra_hms, dec_dms)
@@ -357,7 +393,7 @@ def main() -> int:
         eprint("Error: no pude generar un ID único.")
         return 4
 
-    entry = build_entry(entry_id, sao, name, motto, ra_hms, dec_dms)
+    entry = build_entry(entry_id, sao, name, motto, ra_hms, dec_dms, constellation)
     json_text = json.dumps(entry, ensure_ascii=False, indent=2) + "\n"
 
     if args.dry_run:
