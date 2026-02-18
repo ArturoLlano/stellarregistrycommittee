@@ -53,15 +53,25 @@
       // Optional: make lines a bit lighter/less dominant (0..1)
       try { constLines.setAlpha(0.85); } catch (e) {}
 
-      // Star names: SIMBAD cone search around the target, with labels
-      const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 55); // clamp for sanity
-      const simbad = A.catalogFromSimbad(target, radiusDeg, {
-        name: "SIMBAD stars",
-        onClick: "showPopup",
-        sourceSize: 6,
-        labelColumn: "main_id",
-        labelFont: "10px sans-serif"
-      });
+      // --- Star labels / points (SIMBAD) ---
+      // 1) allow turning it off via ?simbad=0
+      // 2) auto-disable when fov is large (too many points)
+      const showSimbad = (p.get("simbad") ?? "1") !== "0";
+      
+      if (showSimbad && fov <= 20) {
+        const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 5);
+      
+        const simbad = A.catalogFromSimbad(target, radiusDeg, {
+          name: "SIMBAD",
+          onClick: "showPopup",
+          sourceSize: 6,
+          labelColumn: "main_id",
+          labelFont: "10px sans-serif"
+        });
+      
+        aladin.addCatalog(simbad);
+      }
+
 
       aladin.addCatalog(simbad);
     });
