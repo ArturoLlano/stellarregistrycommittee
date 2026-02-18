@@ -267,9 +267,16 @@
         : "Registry Star";
 
       var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
-      frame.src = url;
-      open.href = url;
-      open.textContent = url;
+     frame.src = url;
+
+      // botón “ver en grande”
+      var btnLarge = $("btnOpenMapLarge");
+      if (btnLarge) {
+        btnLarge.onclick = function () {
+          window.open(url, "_blank", "noopener");
+        };
+      }
+
 
       btn.addEventListener("click", function(){
         var isOpen = (wrap.style.display !== "none" && wrap.style.display !== "");
