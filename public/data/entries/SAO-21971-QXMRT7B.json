@@ -1,0 +1,36 @@
+{
+  "id": "SAO-21971-QXMRT7B",
+  "status": "active",
+  "recorded_at_utc": "2026-02-18T21:24:12.891588Z",
+  "designation": {
+    "title": "Registry Entry — SAO 21971",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "21971"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "01 04 15.215",
+      "dec_dms": "+57 07 01.57"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano"
+  }
+}
