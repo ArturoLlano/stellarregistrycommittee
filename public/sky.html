@@ -86,6 +86,32 @@
         aladin.setOverlayImageLayer(constLines, "constellation-lines");
         try { constLines.setAlpha(0.90); } catch (e) {}
       }
+      // ===== “La estrella” del registro (cambiante) via URL =====
+      // Usa: ?ra=...&dec=...&star=Nombre%20de%20la%20estrella
+      const starName = (p.get("star") ?? "").trim();
+      const starRA = (raQ !== null) ? Number(raQ) : null;
+      const starDEC = (decQ !== null) ? Number(decQ) : null;
+      
+      if (starName && Number.isFinite(starRA) && Number.isFinite(starDEC)) {
+        const featuredCat = A.catalog({
+          name: "Featured star",
+          shape: "circle",
+          sourceSize: 18,
+          color: "#ffd36a", // dorado suave
+          onClick: "showPopup",
+      
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(255,211,106,0.98)",
+          labelFont: "18px sans-serif"
+        });
+      
+        featuredCat.addSources([
+          A.source(starRA, starDEC, { name: starName })
+        ]);
+      
+        aladin.addCatalog(featuredCat);
+      }
 
       // Load data (CSV) in parallel
       const tasks = [];
