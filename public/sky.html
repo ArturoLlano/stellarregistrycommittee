@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
   <title>Sky</title>
 
-  <!-- Aladin Lite v3 (CDS) -->
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
 
@@ -33,24 +32,24 @@
     const setHud = (t) => hud.textContent = t;
 
     const p = new URLSearchParams(location.search);
-
-    // Menos zoom = FOV más grande
     const fov = Number(p.get("fov") ?? "55");
     const survey = p.get("survey") ?? "P/DSS2/color";
 
-    // Centro del mapa (para pruebas). Si no pasas nada, centramos en Vega.
-    // Puedes pasar ?target=Vega o ?ra=...&dec=...
+    // Centro del mapa: puedes pasar ?target=... o ?ra=...&dec=...
     const raQ = p.get("ra");
     const decQ = p.get("dec");
     const target =
       p.get("target") ??
       ((raQ && decQ) ? `${raQ} ${decQ}` : "Vega");
 
-    // Vega fijo (lo que nos pediste):
-    // RA 18h 36m 56s = 279.233333°
-    // Dec +38° 47'   = +38.783333°
-    const VEGA_RA_DEG  = 279.23333333333335;
-    const VEGA_DEC_DEG = 38.78333333333333;
+    // ==== LISTA DE ESTRELLAS MANUALES ====
+    // RA/Dec en GRADOS (ICRS/J2000 aprox)
+    // Tú luego reemplazas/añades las que quieras.
+    const MANUAL_STARS = [
+      { name: "Vega",   ra: 279.23333333333335, dec:  38.78333333333333 },
+      { name: "Deneb",  ra: 310.35791666666665, dec:  45.280277777777776 },
+      { name: "Altair", ra: 297.6958333333333,  dec:   8.868333333333334 }
+    ];
 
     if (!window.A) {
       setHud("ERROR: No cargó Aladin Lite (aladin.js/aladin.css).");
@@ -73,34 +72,33 @@
         showShareControl: true
       });
 
-      // --- Constellation lines overlay (HiPS) ---
-      // Esto “regresa” las líneas aunque otras opciones internas fallen.
+      // Líneas de constelación (overlay HiPS)
       const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
       aladin.setOverlayImageLayer(constLines, "constellation-lines");
       try { constLines.setAlpha(0.90); } catch (e) {}
 
-      // --- ÚNICO label manual: "Vega" ---
-      const vegaCat = A.catalog({
-        name: "Manual label",
+      // Catálogo MANUAL con labels
+      const manualCat = A.catalog({
+        name: "Manual labels",
         color: "#ffffff",
         shape: "circle",
         sourceSize: 14,
         onClick: "showPopup",
 
-        // Labels:
         displayLabel: true,
         labelColumn: "name",
         labelColor: "rgba(255,255,255,0.95)",
         labelFont: "16px sans-serif"
       });
 
-      vegaCat.addSources([
-        A.source(VEGA_RA_DEG, VEGA_DEC_DEG, { name: "Vega" })
-      ]);
+      // Agregar todas las estrellas de la lista
+      for (const s of MANUAL_STARS) {
+        manualCat.addSources([ A.source(s.ra, s.dec, { name: s.name }) ]);
+      }
 
-      aladin.addCatalog(vegaCat);
+      aladin.addCatalog(manualCat);
 
-      setHud(`OK — líneas de constelación ON — label manual: Vega — fov=${fov}° — survey=${survey}`);
+      setHud(`OK — constellations ON — labels manuales: ${MANUAL_STARS.length} — fov=${fov}°`);
     });
   })();
   </script>
