@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
   <title>Sky</title>
 
+  <!-- Aladin Lite v3 (CDS) -->
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
 
@@ -32,6 +33,8 @@
     const setHud = (t) => hud.textContent = t;
 
     const p = new URLSearchParams(location.search);
+
+    // Menos zoom = FOV más grande
     const fov = Number(p.get("fov") ?? "55");
     const survey = p.get("survey") ?? "P/DSS2/color";
 
@@ -44,11 +47,17 @@
 
     // ==== LISTA DE ESTRELLAS MANUALES ====
     // RA/Dec en GRADOS (ICRS/J2000 aprox)
-    // Tú luego reemplazas/añades las que quieras.
     const MANUAL_STARS = [
       { name: "Vega",   ra: 279.23333333333335, dec:  38.78333333333333 },
       { name: "Deneb",  ra: 310.35791666666665, dec:  45.280277777777776 },
       { name: "Altair", ra: 297.6958333333333,  dec:   8.868333333333334 }
+    ];
+
+    // ==== LABELS DE CONSTELACIONES (SIN MARCADOR) ====
+    // Cygnus punto medio que nos diste:
+    // RA mid = 308.82°, Dec mid = 44.545°
+    const CONSTELLATION_LABELS = [
+      { name: "C Y G N U S", ra: 308.82, dec: 44.545 }
     ];
 
     if (!window.A) {
@@ -63,6 +72,7 @@
         survey,
         cooFrame: "ICRS",
         projection: "SIN",
+
         showReticle: true,
         showCooGrid: true,
         showLayersControl: true,
@@ -72,14 +82,14 @@
         showShareControl: true
       });
 
-      // Líneas de constelación (overlay HiPS)
+      // --- Líneas de constelaciones (overlay HiPS) ---
       const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
       aladin.setOverlayImageLayer(constLines, "constellation-lines");
       try { constLines.setAlpha(0.90); } catch (e) {}
 
-      // Catálogo MANUAL con labels
-      const manualCat = A.catalog({
-        name: "Manual labels",
+      // --- Catálogo manual: estrellas con marcador + label ---
+      const starCat = A.catalog({
+        name: "Manual stars",
         color: "#ffffff",
         shape: "circle",
         sourceSize: 14,
@@ -91,14 +101,36 @@
         labelFont: "16px sans-serif"
       });
 
-      // Agregar todas las estrellas de la lista
       for (const s of MANUAL_STARS) {
-        manualCat.addSources([ A.source(s.ra, s.dec, { name: s.name }) ]);
+        starCat.addSources([ A.source(s.ra, s.dec, { name: s.name }) ]);
       }
 
-      aladin.addCatalog(manualCat);
+      aladin.addCatalog(starCat);
 
-      setHud(`OK — constellations ON — labels manuales: ${MANUAL_STARS.length} — fov=${fov}°`);
+      // --- Labels manuales de constelación: SIN marcador ---
+      const constCat = A.catalog({
+        name: "Constellation labels",
+        // marcador invisible:
+        sourceSize: 0,
+        shape: "circle",
+        color: "rgba(0,0,0,0)",
+
+        // label visible:
+        displayLabel: true,
+        labelColumn: "name",
+        labelColor: "rgba(255,255,255,0.90)",
+        labelFont: "22px sans-serif",
+
+        onClick: "showPopup"
+      });
+
+      for (const c of CONSTELLATION_LABELS) {
+        constCat.addSources([ A.source(c.ra, c.dec, { name: c.name }) ]);
+      }
+
+      aladin.addCatalog(constCat);
+
+      setHud(`OK — líneas ON — estrellas: ${MANUAL_STARS.length} — const labels: ${CONSTELLATION_LABELS.length} — fov=${fov}°`);
     });
   })();
   </script>
