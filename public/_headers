@@ -15,3 +15,10 @@
 
 /data/*
   Cache-Control: public, max-age=300
+
+/sky/*
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+
+/*
+  X-Frame-Options: SAMEORIGIN
