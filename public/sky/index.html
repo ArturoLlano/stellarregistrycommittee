@@ -109,9 +109,17 @@
           labelFont: "18px sans-serif"
         });
       
+        const sao = (p.get("sao") ?? "").trim();
+        const inscription = (p.get("inscription") ?? "").trim();
+        
         featuredCat.addSources([
-          A.source(starRA, starDEC, { name: starName })
+          A.source(starRA, starDEC, {
+            name: starName,
+            sao: sao || undefined,
+            inscription: inscription || undefined
+          })
         ]);
+
       
         aladin.addCatalog(featuredCat);
       }
