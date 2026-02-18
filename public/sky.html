@@ -26,7 +26,7 @@
     //   ?target=Vega&fov=5
     //   or ?ra=279.2347&dec=38.7837&fov=2
     const p = new URLSearchParams(location.search);
-    const fov = Number(p.get("fov") ?? "25");
+    const fov = Number(p.get("fov") ?? "55");
     const survey = p.get("survey") ?? "P/DSS2/color";
 
     const target =
