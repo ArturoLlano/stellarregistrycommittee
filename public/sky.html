@@ -8,14 +8,16 @@
   <!-- Aladin Lite v3 (CDS) -->
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
-  <!-- The "latest" URLs above are the recommended embed entry points. -->
 </head>
 
 <body style="margin:0; font-family: system-ui, sans-serif;">
   <div style="padding:10px 12px; border-bottom:1px solid #eee;">
     <strong>Sky viewer</strong>
     <span style="opacity:.7">
-      — try: <code>?target=Vega&fov=5</code> or <code>?ra=279.2347&dec=38.7837&fov=2</code>
+      — examples:
+      <code>?target=Vega&fov=20</code>,
+      <code>?target=Vega&fov=55&bright=10</code>,
+      <code>?ra=279.2347&dec=38.7837&fov=25</code>
     </span>
   </div>
 
@@ -23,10 +25,18 @@
 
   <script>
     // URL params:
-    //   ?target=Vega&fov=5
-    //   or ?ra=279.2347&dec=38.7837&fov=2
+    //   ?target=Vega&fov=20
+    //   or ?ra=279.2347&dec=38.7837&fov=25
+    // Optional:
+    //   &survey=P/DSS2/color
+    //   &bright=10   (top N brightest SIMBAD sources; 0 disables)
+    //   &order=V     (magnitude column; V is common; sometimes G works)
+    //   &radius=10   (cone radius in degrees for bright-star query)
+
     const p = new URLSearchParams(location.search);
-    const fov = Number(p.get("fov") ?? "55");
+
+    // Wider default FOV (less zoom)
+    const fov = Number(p.get("fov") ?? "20");
     const survey = p.get("survey") ?? "P/DSS2/color";
 
     const target =
@@ -49,31 +59,46 @@
       // HiPS ID: JAXA/P/CONSTELLATIONS/Image/Lines
       const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
       aladin.setOverlayImageLayer(constLines, "constellation-lines");
-
-      // Optional: make lines a bit lighter/less dominant (0..1)
       try { constLines.setAlpha(0.85); } catch (e) {}
 
-      // --- Star labels / points (SIMBAD) ---
-      // 1) allow turning it off via ?simbad=0
-      // 2) auto-disable when fov is large (too many points)
-      const showSimbad = (p.get("simbad") ?? "1") !== "0";
-      
-      if (showSimbad && fov <= 20) {
-        const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 5);
-      
-        const simbad = A.catalogFromSimbad(target, radiusDeg, {
-          name: "SIMBAD",
-          onClick: "showPopup",
-          sourceSize: 6,
-          labelColumn: "main_id",
-          labelFont: "10px sans-serif"
-        });
-      
-        aladin.addCatalog(simbad);
+      // ---- Bright-star labels (SIMBAD) ----
+      // Keep it lightweight and readable: top N brightest, labeled.
+      const brightLimit = Number(p.get("bright") ?? "10"); // default 10; 0 disables
+      const orderBy = p.get("order") ?? "V";               // magnitude band column
+      const orderDir = "ASC";                              // smaller magnitude = brighter
+
+      // Prefer radius that covers the view, but clamp so SIMBAD doesn't explode
+      const radiusWanted = Number(p.get("radius") ?? String(Math.min(fov / 2, 10)));
+
+      function addBrightStars(radiusDeg) {
+        A.catalogFromSimbad(
+          target,
+          radiusDeg,
+          {
+            name: `Top ${brightLimit} brightest`,
+            onClick: "showPopup",
+            sourceSize: 12,
+
+            // Label each source with its SIMBAD main id
+            labelColumn: "main_id",
+            labelFont: "12px sans-serif",
+
+            // SIMBAD query controls (supported by Aladin Lite):
+            limit: brightLimit,
+            orderBy: orderBy,
+            orderDir: orderDir,
+            verbosity: 2
+          },
+          (cat) => aladin.addCatalog(cat),
+          (err) => {
+            console.warn("SIMBAD cone failed:", err);
+            // Fallback to smaller cone if SIMBAD rejects the radius
+            if (radiusDeg > 5) addBrightStars(5);
+          }
+        );
       }
 
-
-      aladin.addCatalog(simbad);
+      if (brightLimit > 0) addBrightStars(radiusWanted);
     });
   </script>
 </body>
