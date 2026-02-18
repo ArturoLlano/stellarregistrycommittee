@@ -238,63 +238,66 @@
       return "/sky/?" + q.toString();
     }
     function enableMap(entry, insName, saoLabel){
-      var btn = $("btnToggleMap");
-      var wrap = $("mapWrap");
-      var frame = $("skyFrame");
-      var open = $("skyOpenLink");
-      if(!btn || !wrap || !frame || !open) return;
+  var btn = $("btnToggleMap");
+  var wrap = $("mapWrap");
+  var frame = $("skyFrame");
+  var btnLarge = $("btnOpenMapLarge");
 
-      var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
-      var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
+  if(!btn || !wrap || !frame){
+    console.warn("Map elements missing", { btn: !!btn, wrap: !!wrap, frame: !!frame });
+    return;
+  }
 
-      if(!raHms || !decDms){
-        btn.disabled = true;
-        btn.textContent = "Map unavailable";
-        return;
-      }
+  var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
+  var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
 
-      var raDeg = hmsToDeg(raHms);
-      var decDeg = dmsToDeg(decDms);
-      if(!isFinite(raDeg) || !isFinite(decDeg)){
-        btn.disabled = true;
-        btn.textContent = "Map unavailable";
-        return;
-      }
+  if(!raHms || !decDms){
+    btn.disabled = true;
+    btn.textContent = "Map unavailable";
+    wrap.style.display = "none";
+    return;
+  }
 
-      // Prefer inscribed name, fallback to SAO label, else generic
-      var label = (insName && String(insName).trim()) ? String(insName).trim()
-        : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
-        : "Registry Star";
+  var raDeg = hmsToDeg(raHms);
+  var decDeg = dmsToDeg(decDms);
 
-      var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
-     frame.src = url;
+  if(!isFinite(raDeg) || !isFinite(decDeg)){
+    btn.disabled = true;
+    btn.textContent = "Map unavailable";
+    wrap.style.display = "none";
+    return;
+  }
 
-      // botón “ver en grande”
-      var btnLarge = $("btnOpenMapLarge");
-      if (btnLarge) {
-        btnLarge.onclick = function () {
-          window.open(url, "_blank", "noopener");
-        };
-      }
+  var label =
+    (insName && String(insName).trim()) ? String(insName).trim()
+    : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
+    : "Registry Star";
 
+  var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
 
-      btn.addEventListener("click", function(){
-        var isOpen = (wrap.style.display !== "none" && wrap.style.display !== "");
-        // default is hidden; handle both empty and none
-        if (wrap.style.display === "" || wrap.style.display === "none") {
-          wrap.style.display = "block";
-          btn.textContent = "Hide map";
-        } else {
-          wrap.style.display = "none";
-          btn.textContent = "Show map";
-        }
-      });
+  // Set iframe src every time (safe)
+  frame.src = url;
 
-      // show by default
-      wrap.style.display = "block";
-      btn.textContent = "Hide map";
+  // Button: open large
+  if(btnLarge){
+    btnLarge.onclick = function(){
+      window.open(url, "_blank", "noopener");
+    };
+  }
 
-    }
+  // --- default state: OPEN ---
+  var isOpen = true;                 // <- cambia a false si lo quieres cerrado por defecto
+  wrap.style.display = isOpen ? "block" : "none";
+  btn.textContent = isOpen ? "Hide map" : "Show map";
+
+  // Toggle
+  btn.onclick = function(){
+    var currentlyVisible = (wrap.style.display !== "none");
+    wrap.style.display = currentlyVisible ? "none" : "block";
+    btn.textContent = currentlyVisible ? "Show map" : "Hide map";
+  };
+}
+
 
     // Show internal notice when someone visits /__app/* directly
     if (location.pathname.startsWith("/__app/")) {
