@@ -17,7 +17,7 @@
       background: rgba(0,0,0,.55); color: #fff;
       padding: 6px 10px; border-radius: 10px;
       font-size: 12px; line-height: 1.25;
-      max-width: min(720px, calc(100vw - 16px));
+      max-width: min(860px, calc(100vw - 16px));
       backdrop-filter: blur(4px);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
@@ -34,45 +34,42 @@
 
     const p = new URLSearchParams(location.search);
 
-    // Menos zoom = FOV más grande
-    const fov = Number(p.get("fov") ?? "55");
+    // Viewer params
+    const fov = toNum(p.get("fov"), 55);
     const survey = p.get("survey") ?? "P/DSS2/color";
 
-    // Centro del mapa: puedes pasar ?target=... o ?ra=...&dec=...
+    // Toggles
+    const showStars = (p.get("stars") ?? "1") !== "0";
+    const showConstLabels = (p.get("const") ?? "1") !== "0";
+    const showLines = (p.get("lines") ?? "1") !== "0";
+
+    // Density controls
+    const magLimit = toNum(p.get("mag"), null);     // e.g. 2.5  -> keep mag_v <= 2.5
+    const maxStars = clampInt(toInt(p.get("max"), 200), 1, 2000);
+
+    // Center: allow ?target=... or ?ra=...&dec=...
     const raQ = p.get("ra");
     const decQ = p.get("dec");
     const target =
       p.get("target") ??
       ((raQ && decQ) ? `${raQ} ${decQ}` : "Vega");
 
-    // ==== LISTA DE ESTRELLAS MANUALES ====
-    // RA/Dec en GRADOS (ICRS/J2000 aprox)
-    const MANUAL_STARS = [
-      { name: "Vega",   ra: 279.23333333333335, dec:  38.78333333333333 },
-      { name: "Deneb",  ra: 310.35791666666665, dec:  45.280277777777776 },
-      { name: "Altair", ra: 297.6958333333333,  dec:   8.868333333333334 }
-    ];
-
-    // ==== LABELS DE CONSTELACIONES (SIN MARCADOR) ====
-    // Cygnus punto medio que nos diste:
-    // RA mid = 308.82°, Dec mid = 44.545°
-    const CONSTELLATION_LABELS = [
-      { name: "C Y G N U S", ra: 308.82, dec: 44.545 }
-    ];
+    // Data locations (relative URLs)
+    const STARS_CSV_URL = "/data/entries/maps/stars.csv";
+    const CONST_CSV_URL = "/data/entries/maps/constellations.csv";
 
     if (!window.A) {
       setHud("ERROR: No cargó Aladin Lite (aladin.js/aladin.css).");
       return;
     }
 
-    A.init.then(() => {
+    A.init.then(async () => {
       const aladin = A.aladin("#aladin", {
         target,
         fov,
         survey,
         cooFrame: "ICRS",
         projection: "SIN",
-
         showReticle: true,
         showCooGrid: true,
         showLayersControl: true,
@@ -82,56 +79,195 @@
         showShareControl: true
       });
 
-      // --- Líneas de constelaciones (overlay HiPS) ---
-      const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
-      aladin.setOverlayImageLayer(constLines, "constellation-lines");
-      try { constLines.setAlpha(0.90); } catch (e) {}
-
-      // --- Catálogo manual: estrellas con marcador + label ---
-      const starCat = A.catalog({
-        name: "Manual stars",
-        color: "#ffffff",
-        shape: "circle",
-        sourceSize: 14,
-        onClick: "showPopup",
-
-        displayLabel: true,
-        labelColumn: "name",
-        labelColor: "rgba(255,255,255,0.95)",
-        labelFont: "16px sans-serif"
-      });
-
-      for (const s of MANUAL_STARS) {
-        starCat.addSources([ A.source(s.ra, s.dec, { name: s.name }) ]);
+      // --- Constellation lines overlay (HiPS) ---
+      if (showLines) {
+        const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+        aladin.setOverlayImageLayer(constLines, "constellation-lines");
+        try { constLines.setAlpha(0.90); } catch (e) {}
       }
 
-      aladin.addCatalog(starCat);
+      // Load data (CSV) in parallel
+      const tasks = [];
+      if (showStars) tasks.push(loadCsv(STARS_CSV_URL).then(rows => ({ kind: "stars", rows })));
+      if (showConstLabels) tasks.push(loadCsv(CONST_CSV_URL).then(rows => ({ kind: "const", rows })));
 
-      // --- Labels manuales de constelación: SIN marcador ---
-      const constCat = A.catalog({
-        name: "Constellation labels",
-        // marcador invisible:
-        sourceSize: 0,
-        shape: "circle",
-        color: "rgba(0,0,0,0)",
-
-        // label visible:
-        displayLabel: true,
-        labelColumn: "name",
-        labelColor: "rgba(255,255,255,0.90)",
-        labelFont: "22px sans-serif",
-
-        onClick: "showPopup"
-      });
-
-      for (const c of CONSTELLATION_LABELS) {
-        constCat.addSources([ A.source(c.ra, c.dec, { name: c.name }) ]);
+      let results;
+      try {
+        results = await Promise.all(tasks);
+      } catch (err) {
+        console.error(err);
+        setHud("ERROR: No pude cargar los CSV (revisa rutas en /data/entries/maps/).");
+        return;
       }
 
-      aladin.addCatalog(constCat);
+      // --- Render stars (marker + label) ---
+      if (showStars) {
+        const starsRes = results.find(r => r.kind === "stars");
+        const stars = normalizeStars(starsRes?.rows ?? []);
 
-      setHud(`OK — líneas ON — estrellas: ${MANUAL_STARS.length} — const labels: ${CONSTELLATION_LABELS.length} — fov=${fov}°`);
+        // Filter by magnitude if provided
+        const filtered = (magLimit === null)
+          ? stars
+          : stars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= magLimit) : false);
+
+        // Sort: brightest first
+        filtered.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
+
+        // Cap
+        const finalStars = filtered.slice(0, maxStars);
+
+        const starCat = A.catalog({
+          name: "Stars",
+          color: "#ffffff",
+          shape: "circle",
+          sourceSize: 14,
+          onClick: "showPopup",
+
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(255,255,255,0.95)",
+          labelFont: "14px sans-serif"
+        });
+
+        // Add sources
+        for (const s of finalStars) {
+          starCat.addSources([ A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v }) ]);
+        }
+
+        aladin.addCatalog(starCat);
+      }
+
+      // --- Render constellation labels (label-only) ---
+      if (showConstLabels) {
+        const constRes = results.find(r => r.kind === "const");
+        const consts = normalizeConstellations(constRes?.rows ?? []);
+
+        const constCat = A.catalog({
+          name: "Constellations",
+          sourceSize: 0,                    // no marker
+          shape: "circle",
+          color: "rgba(0,0,0,0)",
+
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(255,255,255,0.90)",
+          labelFont: "20px sans-serif",
+          onClick: "showPopup"
+        });
+
+        for (const c of consts) {
+          constCat.addSources([ A.source(c.ra_deg, c.dec_deg, { name: c.name }) ]);
+        }
+
+        aladin.addCatalog(constCat);
+      }
+
+      // HUD summary
+      const hudBits = [];
+      hudBits.push(`OK`);
+      hudBits.push(`fov=${fov}°`);
+      if (showLines) hudBits.push(`lines=on`);
+      if (showStars) hudBits.push(`stars=on${magLimit!==null ? ` (mag<=${magLimit})` : ""}, max=${maxStars}`);
+      if (showConstLabels) hudBits.push(`const=on`);
+      setHud(hudBits.join(" — "));
     });
+
+    // ---------- CSV helpers ----------
+    async function loadCsv(url) {
+      // cache-bust in dev if you want: add ?_t=...
+      const res = await fetch(url, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`CSV fetch failed: ${url} (${res.status})`);
+      const text = await res.text();
+      return parseCsv(text);
+    }
+
+    function parseCsv(text) {
+      // Simple CSV parser: handles commas + quoted fields.
+      const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim() && !l.trim().startsWith("#"));
+      if (!lines.length) return [];
+
+      const header = splitCsvLine(lines[0]).map(h => h.trim());
+      const rows = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCsvLine(lines[i]);
+        if (!cols.length) continue;
+        const obj = {};
+        for (let j = 0; j < header.length; j++) obj[header[j]] = (cols[j] ?? "").trim();
+        rows.push(obj);
+      }
+      return rows;
+    }
+
+    function splitCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === '"' ) {
+          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    // ---------- Normalizers ----------
+    function normalizeStars(rows) {
+      // expected: name, ra_deg, dec_deg, mag_v
+      const out = [];
+      for (const r of rows) {
+        const name = (r.name ?? "").trim();
+        const ra_deg = toNum(r.ra_deg, NaN);
+        const dec_deg = toNum(r.dec_deg, NaN);
+        const mag_v = toNum(r.mag_v, NaN);
+
+        if (!name || !Number.isFinite(ra_deg) || !Number.isFinite(dec_deg)) continue;
+        out.push({ name, ra_deg, dec_deg, mag_v: Number.isFinite(mag_v) ? mag_v : null });
+      }
+      return out;
+    }
+
+    function normalizeConstellations(rows) {
+      // expected: name, ra_deg, dec_deg
+      const out = [];
+      for (const r of rows) {
+        const name = (r.name ?? "").trim();
+        const ra_deg = toNum(r.ra_deg, NaN);
+        const dec_deg = toNum(r.dec_deg, NaN);
+        if (!name || !Number.isFinite(ra_deg) || !Number.isFinite(dec_deg)) continue;
+        out.push({ name, ra_deg, dec_deg });
+      }
+      return out;
+    }
+
+    // ---------- Small utils ----------
+    function toNum(v, fallback) {
+      if (v === null || v === undefined || v === "") return fallback;
+      const n = Number(String(v).trim());
+      return Number.isFinite(n) ? n : fallback;
+    }
+    function toInt(v, fallback) {
+      if (v === null || v === undefined || v === "") return fallback;
+      const n = parseInt(String(v).trim(), 10);
+      return Number.isFinite(n) ? n : fallback;
+    }
+    function clampInt(n, a, b) {
+      return Math.min(b, Math.max(a, n));
+    }
   })();
   </script>
 </body>
