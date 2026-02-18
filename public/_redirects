@@ -2,6 +2,8 @@
 /r            /r/index.html 200
 /r/           /r/index.html 200
 
+/sky  /sky/  301
+
 # QR permanence: /r/<ID> -> canonical
 /r/*          /registry/:splat 301
 
