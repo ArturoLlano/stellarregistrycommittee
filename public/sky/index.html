@@ -33,6 +33,9 @@
     const setHud = (t) => hud.textContent = t;
 
     const p = new URLSearchParams(location.search);
+    const showHud = (p.get("hud") ?? "0") !== "0"; // default: OFF
+    if (!showHud) hud.style.display = "none";
+
 
     // Viewer params
     const fov = toNum(p.get("fov"), 55);
