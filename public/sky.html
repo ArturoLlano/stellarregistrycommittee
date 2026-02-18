@@ -54,7 +54,7 @@
       try { constLines.setAlpha(0.85); } catch (e) {}
 
       // Star names: SIMBAD cone search around the target, with labels
-      const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 5); // clamp for sanity
+      const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 55); // clamp for sanity
       const simbad = A.catalogFromSimbad(target, radiusDeg, {
         name: "SIMBAD stars",
         onClick: "showPopup",
