@@ -15,7 +15,7 @@
     <strong>Sky viewer</strong>
     <span style="opacity:.7">
       — examples:
-      <code>?target=Vega&fov=20</code>,
+      <code>?target=Vega&fov=55</code>,
       <code>?target=Vega&fov=55&bright=10</code>,
       <code>?ra=279.2347&dec=38.7837&fov=55</code>
     </span>
@@ -36,7 +36,7 @@
     const p = new URLSearchParams(location.search);
 
     // Wider default FOV (less zoom)
-    const fov = Number(p.get("fov") ?? "20");
+    const fov = Number(p.get("fov") ?? "55");
     const survey = p.get("survey") ?? "P/DSS2/color";
 
     const target =
