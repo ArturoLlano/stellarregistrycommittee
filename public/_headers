@@ -1,8 +1,8 @@
 /*
   X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
   Referrer-Policy: no-referrer
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  X-Frame-Options: SAMEORIGIN
 
 /registry*
   Cache-Control: no-cache
@@ -15,3 +15,7 @@
 
 /data/*
   Cache-Control: public, max-age=300
+
+/sky/*
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
