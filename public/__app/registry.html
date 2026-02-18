@@ -229,6 +229,9 @@
       q.set("ra", String(opts.raDeg));
       q.set("dec", String(opts.decDeg));
       q.set("star", opts.starLabel || "Registry Star");
+      q.set("sao", opts.sao || "");
+      q.set("inscription", opts.inscription || "");
+
       // sensible defaults
       q.set("fov", "55");
       q.set("mag", "3");
@@ -272,8 +275,12 @@
     (insName && String(insName).trim()) ? String(insName).trim()
     : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
     : "Registry Star";
+  
+  var inscription = (entry.object && entry.object.inscription && entry.object.inscription.motto) ? entry.object.inscription.motto : "";
+  var sao = saoLabel || ""; // ej. "SAO 12345"
 
-  var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
+  var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label, sao: sao, inscription: inscription });
+  // var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
 
   // Set iframe src every time (safe)
   frame.src = url;
