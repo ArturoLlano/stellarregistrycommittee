@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Embedded Sky Map</title>
+
+  <!-- Aladin Lite v3 (CDS) -->
+  <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+  <!-- The "latest" URLs above are the recommended embed entry points. -->
+</head>
+
+<body style="margin:0; font-family: system-ui, sans-serif;">
+  <div style="padding:10px 12px; border-bottom:1px solid #eee;">
+    <strong>Sky viewer</strong>
+    <span style="opacity:.7">
+      — try: <code>?target=Vega&fov=5</code> or <code>?ra=279.2347&dec=38.7837&fov=2</code>
+    </span>
+  </div>
+
+  <div id="aladin-lite-div" style="width:100%; height: calc(100vh - 44px);"></div>
+
+  <script>
+    // URL params:
+    //   ?target=Vega&fov=5
+    //   or ?ra=279.2347&dec=38.7837&fov=2
+    const p = new URLSearchParams(location.search);
+    const fov = Number(p.get("fov") ?? "5");
+    const survey = p.get("survey") ?? "P/DSS2/color";
+
+    const target =
+      p.get("target") ??
+      ((p.get("ra") && p.get("dec")) ? `${p.get("ra")} ${p.get("dec")}` : "Vega");
+
+    A.init.then(() => {
+      // Base sky map
+      const aladin = A.aladin("#aladin-lite-div", {
+        target,
+        fov,
+        survey,
+        showCooGrid: true,
+        showSimbadPointerControl: true,
+        showLayersControl: true,
+        showGotoControl: true
+      });
+
+      // Constellation lines as an overlay HiPS layer (JAXA / AstroArts)
+      // HiPS ID: JAXA/P/CONSTELLATIONS/Image/Lines
+      const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+      aladin.setOverlayImageLayer(constLines, "constellation-lines");
+
+      // Optional: make lines a bit lighter/less dominant (0..1)
+      try { constLines.setAlpha(0.85); } catch (e) {}
+
+      // Star names: SIMBAD cone search around the target, with labels
+      const radiusDeg = Math.min(Math.max(fov / 2, 0.2), 5); // clamp for sanity
+      const simbad = A.catalogFromSimbad(target, radiusDeg, {
+        name: "SIMBAD stars",
+        onClick: "showPopup",
+        sourceSize: 6,
+        labelColumn: "main_id",
+        labelFont: "10px sans-serif"
+      });
+
+      aladin.addCatalog(simbad);
+    });
+  </script>
+</body>
+</html>
