@@ -27,6 +27,16 @@
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f0f0f0;padding:2px 6px;border-radius:8px}
     .badge{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
     #internalNotice{display:none;color:var(--muted);margin-top:10px}
+
+    /* Small additions for map block (minimal + institutional) */
+    .map-block{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+    .map-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .map-meta{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .map-sub{font-size:13px;color:var(--muted);margin-top:2px}
+    .map-btn{padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer}
+    .map-wrap{display:none;margin-top:12px}
+    .map-frame{width:100%;height:420px;border:1px solid rgba(0,0,0,.10);border-radius:14px;overflow:hidden;background:#000}
+    .map-foot{margin-top:8px;font-size:12px;color:var(--muted)}
   </style>
   <link rel="stylesheet" href="/assets/css/registry.css" />
 </head>
@@ -50,7 +60,7 @@
           <div class="kv__k">Record ID</div>
           <div class="kv__v"><code id="record_id">—</code></div>
         </div>
-        
+
         <div class="kv__row">
           <div class="kv__k">Canonical URL</div>
           <div class="kv__v"><code id="canonical_url">—</code></div>
@@ -60,12 +70,12 @@
           <div class="kv__k">Designation</div>
           <div class="kv__v" id="designation">—</div>
         </div>
-        
+
         <div class="kv__row">
           <div class="kv__k">Inscribed name</div>
           <div class="kv__v" id="inscription_name">—</div>
         </div>
-        
+
         <div class="kv__row">
           <div class="kv__k">Inscription</div>
           <div class="kv__v" id="inscription_motto">—</div>
@@ -80,7 +90,7 @@
           <div class="kv__k">Recorded by</div>
           <div class="kv__v" id="recorded_by">—</div>
         </div>
-        
+
         <div class="kv__row">
           <div class="kv__k">Sponsor</div>
           <div class="kv__v" id="sponsor">—</div>
@@ -95,7 +105,6 @@
           <div class="kv__k">Right Ascension (J2000)</div>
           <div class="kv__v"><span id="ra_fmt">—</span></div>
         </div>
-
 
         <div class="kv__row">
           <div class="kv__k">Declination (J2000)</div>
@@ -117,7 +126,6 @@
           <div class="kv__v"><a id="qr_link" href="#"><code id="qr_path">—</code></a></div>
         </div>
 
-
         <div class="kv__row">
           <div class="kv__k">Entry file</div>
           <div class="kv__v"><code id="entry_path">—</code></div>
@@ -135,6 +143,33 @@
         <button class="btn" type="button" id="btnCopy">Copy canonical link</button>
         <button class="btn" type="button" id="btnPrint">Print record</button>
       </div>
+
+      <!-- MAP BLOCK (embedded viewer) -->
+      <section class="map-block" aria-label="Sky map">
+        <div class="map-head">
+          <div>
+            <div class="map-meta">Sky map</div>
+            <div class="map-sub">Embedded sky viewer centered on this record.</div>
+          </div>
+          <button class="map-btn" type="button" id="btnToggleMap">Show map</button>
+        </div>
+
+        <div class="map-wrap" id="mapWrap">
+          <iframe
+            id="skyFrame"
+            class="map-frame"
+            title="Sky map"
+            src="/sky/"
+            loading="lazy"
+            referrerpolicy="no-referrer">
+          </iframe>
+
+          <div class="map-foot">
+            Open in new tab:
+            <a id="skyOpenLink" href="/sky/" target="_blank" rel="noopener">/sky/</a>
+          </div>
+        </div>
+      </section>
 
       <p class="muted" style="margin:14px 0 0;">
         This registry is private and commemorative in nature and is mantained by The Stellar Registry Committee.
@@ -155,6 +190,99 @@
     function splitParts(s){ return String(s||"").trim().replace(/\s+/g," ").split(" "); }
     function formatRaHms(s){ var p=splitParts(s); return (p.length>=3) ? (p[0]+"h "+p[1]+"m "+p[2]+"s") : String(s||""); }
     function formatDecDms(s){ var p=splitParts(s); return (p.length>=3) ? (p[0]+"° "+p[1]+"′ "+p[2]+"″") : String(s||""); }
+
+    // --- Converters for sky iframe ---
+    function hmsToDeg(hms){
+      // Accepts: "2 35 43.9" OR "2h 35m 43.9s" OR "2:35:43.9"
+      var s = String(hms||"").trim()
+        .replace(/h|m|s/gi," ")
+        .replace(/:/g," ")
+        .replace(/[^\d.+-]+/g," ")
+        .trim();
+      var parts = s.split(/\s+/).map(Number).filter(function(n){ return isFinite(n); });
+      var h = parts[0] || 0, m = parts[1] || 0, sec = parts[2] || 0;
+      return (h + (m/60) + (sec/3600)) * 15;
+    }
+    function dmsToDeg(dms){
+      // Accepts: "+68 22 6" OR "+68° 22′ 6″" OR "-10:30:00"
+      var t = String(dms||"").trim();
+      t = t.replace(/[′’]/g,"'").replace(/[″”]/g,'"');
+      var sign = (t.charAt(0)==='-') ? -1 : 1;
+      var s = t
+        .replace(/°|d/gi," ")
+        .replace(/'|m/gi," ")
+        .replace(/"|s/gi," ")
+        .replace(/:/g," ")
+        .replace(/[^\d.+-]+/g," ")
+        .trim();
+      var parts = s.split(/\s+/).map(Number).filter(function(n){ return isFinite(n); });
+      var deg = Math.abs(parts[0] || 0), min = parts[1] || 0, sec = parts[2] || 0;
+      return sign * (deg + (min/60) + (sec/3600));
+    }
+    function buildSkyUrl(opts){
+      // opts: { raDeg, decDeg, starLabel }
+      var q = new URLSearchParams();
+      q.set("ra", String(opts.raDeg));
+      q.set("dec", String(opts.decDeg));
+      q.set("star", opts.starLabel || "Registry Star");
+      // sensible defaults
+      q.set("fov", "55");
+      q.set("mag", "3");
+      q.set("survey", "P/Mellinger/color");
+      // If you later want toggles:
+      // q.set("lines","1"); q.set("stars","1"); q.set("const","1");
+      return "/sky/?" + q.toString();
+    }
+    function enableMap(entry, insName, saoLabel){
+      var btn = $("btnToggleMap");
+      var wrap = $("mapWrap");
+      var frame = $("skyFrame");
+      var open = $("skyOpenLink");
+      if(!btn || !wrap || !frame || !open) return;
+
+      var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
+      var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
+
+      if(!raHms || !decDms){
+        btn.disabled = true;
+        btn.textContent = "Map unavailable";
+        return;
+      }
+
+      var raDeg = hmsToDeg(raHms);
+      var decDeg = dmsToDeg(decDms);
+      if(!isFinite(raDeg) || !isFinite(decDeg)){
+        btn.disabled = true;
+        btn.textContent = "Map unavailable";
+        return;
+      }
+
+      // Prefer inscribed name, fallback to SAO label, else generic
+      var label = (insName && String(insName).trim()) ? String(insName).trim()
+        : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
+        : "Registry Star";
+
+      var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
+      frame.src = url;
+      open.href = url;
+      open.textContent = url;
+
+      btn.addEventListener("click", function(){
+        var isOpen = (wrap.style.display !== "none" && wrap.style.display !== "");
+        // default is hidden; handle both empty and none
+        if (wrap.style.display === "" || wrap.style.display === "none") {
+          wrap.style.display = "block";
+          btn.textContent = "Hide map";
+        } else {
+          wrap.style.display = "none";
+          btn.textContent = "Show map";
+        }
+      });
+
+      // keep hidden by default
+      wrap.style.display = "none";
+      btn.textContent = "Show map";
+    }
 
     // Show internal notice when someone visits /__app/* directly
     if (location.pathname.startsWith("/__app/")) {
@@ -200,11 +328,8 @@
         setText("recorded_by", entry.recorded_by && entry.recorded_by.display);
         setText("sponsor", entry.sponsor && entry.sponsor.display);
 
-        
         setText("inscription_name", ins && ins.name);
         setText("inscription_motto", ins && ins.motto);
-
-
 
         var dt = entry.recorded_at_utc || "";
         setText("recorded_at", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
@@ -212,21 +337,21 @@
 
         var ra = entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
         var dec = entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
-        
+
         setText("ra_fmt", ra ? formatRaHms(ra) : "");
         setText("dec_fmt", dec ? formatDecDms(dec) : "");
-        
+
         // Constellation (optional)
         var cons = entry && entry.object && entry.object.context && entry.object.context.constellation;
         var rowCons = $("row-constellation");
         var fieldCons = $("field-constellation");
-        
+
         if (rowCons && fieldCons) {
           if (cons && (cons.name || cons.iau_abbrev)) {
             var label = (cons.name && cons.iau_abbrev)
               ? (cons.name + " (" + cons.iau_abbrev + ")")
               : (cons.name || cons.iau_abbrev);
-        
+
             fieldCons.textContent = label;
             rowCons.style.display = "";
           } else {
@@ -234,14 +359,14 @@
           }
         }
 
-
         // Catalog ref (prefer SAO if present)
         var cat = (entry.object && entry.object.catalog) ? entry.object.catalog : [];
         var sao = null;
         for(var i=0;i<cat.length;i++){
           if(cat[i] && cat[i].scheme==="SAO"){ sao = cat[i]; break; }
         }
-        setText("catalog_ref", sao ? ("SAO " + sao.id) : "");
+        var saoText = sao ? ("SAO " + sao.id) : "";
+        setText("catalog_ref", saoText);
 
         // Notes list
         var notes = entry.notes || [];
@@ -260,6 +385,9 @@
             });
           }
         }
+
+        // ✅ Enable map (uses ra/dec from entry + label from inscribed name)
+        enableMap(entry, (ins && ins.name) ? ins.name : "", saoText);
       })
       .catch(function(){
         $("status_badge").textContent = "not found";
