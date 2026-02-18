@@ -1,104 +1,137 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Embedded Sky Map</title>
+  <title>Sky viewer</title>
 
   <!-- Aladin Lite v3 (CDS) -->
   <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
   <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+
+  <style>
+    html, body { height: 100%; margin: 0; background: #000; }
+    #aladin { position: fixed; inset: 0; }
+    .hud{
+      position: fixed; left: 12px; top: 10px; z-index: 9999;
+      color: rgba(255,255,255,0.88);
+      font: 12px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 10px;
+      padding: 8px 10px;
+      backdrop-filter: blur(6px);
+      max-width: min(680px, calc(100vw - 24px));
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .hud code { color: rgba(255,255,255,0.95); }
+  </style>
 </head>
 
-<body style="margin:0; font-family: system-ui, sans-serif;">
-  <div style="padding:10px 12px; border-bottom:1px solid #eee;">
-    <strong>Sky viewer</strong>
-    <span style="opacity:.7">
-      — examples:
-      <code>?target=Vega&fov=55</code>,
-      <code>?target=Vega&fov=55&bright=10</code>,
-      <code>?ra=279.2347&dec=38.7837&fov=55</code>
-    </span>
+<body>
+  <div id="aladin"></div>
+  <div class="hud" id="hud">
+    Cargando… (ejemplos: <code>?target=Vega&fov=55</code> | <code>?ra=279.2347&dec=38.7837&fov=55</code>)
   </div>
-
-  <div id="aladin-lite-div" style="width:100%; height: calc(100vh - 44px);"></div>
 
   <script>
     // URL params:
-    //   ?target=Vega&fov=20
-    //   or ?ra=279.2347&dec=38.7837&fov=25
+    //  ?target=Vega&fov=55
+    //  ?ra=279.2347&dec=38.7837&fov=55
     // Optional:
-    //   &survey=P/DSS2/color
-    //   &bright=10   (top N brightest SIMBAD sources; 0 disables)
-    //   &order=V     (magnitude column; V is common; sometimes G works)
-    //   &radius=10   (cone radius in degrees for bright-star query)
+    //  &survey=P/DSS2/color
+    //  &bright=10      (0 desactiva)
+    //  &order=V        (col de magnitud; V común; a veces G funciona)
+    //  &radius=20      (radio del cono en grados; si no, se estima)
+    //  &lines=1        (0 desactiva líneas)
 
     const p = new URLSearchParams(location.search);
 
-    // Wider default FOV (less zoom)
-    const fov = Number(p.get("fov") ?? "55");
+    const fov = Number(p.get("fov") ?? "55");                 // más grande = menos zoom
     const survey = p.get("survey") ?? "P/DSS2/color";
 
+    const ra = p.get("ra");
+    const dec = p.get("dec");
     const target =
       p.get("target") ??
-      ((p.get("ra") && p.get("dec")) ? `${p.get("ra")} ${p.get("dec")}` : "Vega");
+      ((ra && dec) ? `${ra} ${dec}` : "Vega");
+
+    const brightLimit = Number(p.get("bright") ?? "10");
+    const orderBy = p.get("order") ?? "V";
+    const linesOn = (p.get("lines") ?? "1") !== "0";
+
+    // Radio del cono: lo hacemos suficientemente grande para que el “borde del círculo”
+    // quede fuera de pantalla en la mayoría de casos.
+    const radiusWanted = Number(p.get("radius") ?? String(Math.min(Math.max(fov * 0.75, 8), 60)));
+
+    function setHud(text){
+      const hud = document.getElementById("hud");
+      hud.textContent = text;
+    }
+
+    // Si por alguna razón no cargó Aladin, lo avisamos.
+    if (!window.A) {
+      setHud("ERROR: No cargó Aladin Lite (revisa que aladin.js/aladin.css no estén 404).");
+      throw new Error("Aladin Lite not loaded");
+    }
 
     A.init.then(() => {
-      // Base sky map
-      const aladin = A.aladin("#aladin-lite-div", {
+      const aladin = A.aladin("#aladin", {
         target,
         fov,
         survey,
+        cooFrame: "ICRS",
         showCooGrid: true,
         showSimbadPointerControl: true,
         showLayersControl: true,
         showGotoControl: true
       });
 
-      // Constellation lines as an overlay HiPS layer (JAXA / AstroArts)
-      // HiPS ID: JAXA/P/CONSTELLATIONS/Image/Lines
-      const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
-      aladin.setOverlayImageLayer(constLines, "constellation-lines");
-      try { constLines.setAlpha(0.85); } catch (e) {}
-
-      // ---- Bright-star labels (SIMBAD) ----
-      // Keep it lightweight and readable: top N brightest, labeled.
-      const brightLimit = Number(p.get("bright") ?? "10"); // default 10; 0 disables
-      const orderBy = p.get("order") ?? "V";               // magnitude band column
-      const orderDir = "ASC";                              // smaller magnitude = brighter
-
-      // Prefer radius that covers the view, but clamp so SIMBAD doesn't explode
-      const radiusWanted = Number(p.get("radius") ?? String(Math.min(fov / 2, 10)));
-
-      function addBrightStars(radiusDeg) {
-        A.catalogFromSimbad(
-          target,
-          radiusDeg,
-          {
-            name: `Top ${brightLimit} brightest`,
-            onClick: "showPopup",
-            sourceSize: 12,
-
-            // Label each source with its SIMBAD main id
-            labelColumn: "main_id",
-            labelFont: "12px sans-serif",
-
-            // SIMBAD query controls (supported by Aladin Lite):
-            limit: brightLimit,
-            orderBy: orderBy,
-            orderDir: orderDir,
-            verbosity: 2
-          },
-          (cat) => aladin.addCatalog(cat),
-          (err) => {
-            console.warn("SIMBAD cone failed:", err);
-            // Fallback to smaller cone if SIMBAD rejects the radius
-            if (radiusDeg > 5) addBrightStars(5);
-          }
-        );
+      // Constellation lines overlay (HiPS)
+      if (linesOn) {
+        const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+        aladin.setOverlayImageLayer(constLines, "constellation-lines");
+        try { constLines.setAlpha(0.85); } catch (e) {}
       }
 
-      if (brightLimit > 0) addBrightStars(radiusWanted);
+      // Brightest stars (SIMBAD) — limit to N, sorted by magnitude (smaller = brighter)
+      if (brightLimit > 0) {
+        function addBright(radiusDeg) {
+          A.catalogFromSimbad(
+            target,
+            radiusDeg,
+            {
+              name: `Top ${brightLimit} brightest`,
+              onClick: "showPopup",
+              sourceSize: 12,
+
+              // “Nombres”: esto muestra el identificador principal de SIMBAD.
+              // En estrellas famosas suele ser el nombre propio (Vega/Deneb/etc).
+              labelColumn: "main_id",
+              labelFont: "13px sans-serif",
+
+              limit: brightLimit,
+              orderBy: orderBy,
+              orderDir: "ASC",
+              verbosity: 2
+            },
+            (cat) => {
+              aladin.addCatalog(cat);
+              setHud(`OK — target=${target} — fov=${fov}° — survey=${survey} — bright=${brightLimit} (order ${orderBy}) — radius=${radiusDeg}°`);
+            },
+            (err) => {
+              console.warn("SIMBAD cone failed:", err);
+              // fallback por si el radio es demasiado grande para SIMBAD
+              if (radiusDeg > 10) addBright(10);
+              else setHud(`OK (sin SIMBAD) — target=${target} — fov=${fov}° — survey=${survey}`);
+            }
+          );
+        }
+
+        addBright(radiusWanted);
+      } else {
+        setHud(`OK — target=${target} — fov=${fov}° — survey=${survey} — (sin catálogo)`);
+      }
     });
   </script>
 </body>
