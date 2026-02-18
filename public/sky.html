@@ -2,12 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no" />
-  <title>Sky viewer</title>
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
+  <title>Sky</title>
+
+  <!-- Aladin Lite v3 (CDS) -->
+  <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+
   <style>
     html, body { margin:0; height:100%; background:#000; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     #aladin { position:absolute; inset:0; }
-    #hud {
+    #hud{
       position: fixed; left: 8px; top: 8px; z-index: 9999;
       background: rgba(0,0,0,.55); color: #fff;
       padding: 6px 10px; border-radius: 10px;
@@ -22,134 +27,80 @@
   <div id="hud">Cargando…</div>
   <div id="aladin"></div>
 
-  <!-- Aladin Lite v3 (CDS) -->
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
-
   <script>
   (function () {
-    const hud = document.getElementById('hud');
+    const hud = document.getElementById("hud");
     const setHud = (t) => hud.textContent = t;
 
-    function num(v, def) {
-      const x = parseFloat(v);
-      return Number.isFinite(x) ? x : def;
-    }
-    function clamp(x, a, b) {
-      return Math.min(b, Math.max(a, x));
-    }
+    const p = new URLSearchParams(location.search);
 
-    const params = new URLSearchParams(location.search);
+    // Menos zoom = FOV más grande
+    const fov = Number(p.get("fov") ?? "55");
+    const survey = p.get("survey") ?? "P/DSS2/color";
 
-    // Default “menos zoom”:
-    const fov = clamp(num(params.get('fov'), 55), 0.05, 180);
+    // Centro del mapa (para pruebas). Si no pasas nada, centramos en Vega.
+    // Puedes pasar ?target=Vega o ?ra=...&dec=...
+    const raQ = p.get("ra");
+    const decQ = p.get("dec");
+    const target =
+      p.get("target") ??
+      ((raQ && decQ) ? `${raQ} ${decQ}` : "Vega");
 
-    // Cuántas estrellas etiquetar:
-    const n = clamp(parseInt(params.get('n') || '10', 10), 1, 50);
-
-    // Radio para SIMBAD (en grados). IMPORTANTE: SIMBAD se vuelve pesado con radios enormes,
-    // por eso lo limitamos a <= 10°.
-    const radiusDefault = Math.min(10, Math.max(2, fov * 0.18)); // ~10° para fov 55
-    const radius = clamp(num(params.get('radius'), radiusDefault), 0.05, 10);
-
-    // Centro: ?ra=&dec= o ?target=
-    const ra = params.get('ra');
-    const dec = params.get('dec');
-    const target = params.get('target');
-    const center = (ra && dec)
-      ? { ra: parseFloat(ra), dec: parseFloat(dec) }
-      : (target || 'Vega');
+    // Vega fijo (lo que nos pediste):
+    // RA 18h 36m 56s = 279.233333°
+    // Dec +38° 47'   = +38.783333°
+    const VEGA_RA_DEG  = 279.23333333333335;
+    const VEGA_DEC_DEG = 38.78333333333333;
 
     if (!window.A) {
-      setHud('Error: no cargó Aladin Lite.');
+      setHud("ERROR: No cargó Aladin Lite (aladin.js/aladin.css).");
       return;
     }
 
     A.init.then(() => {
-      setHud(`Cargando cielo… (fov=${fov}°, radio=${radius}°, top=${n})`);
-
-      const aladin = A.aladin('#aladin', {
-        survey: 'P/DSS2/color',
-        target: center,
-        fov: fov,
-        projection: 'SIN',
-        cooFrame: 'ICRS',
-
+      const aladin = A.aladin("#aladin", {
+        target,
+        fov,
+        survey,
+        cooFrame: "ICRS",
+        projection: "SIN",
         showReticle: true,
         showCooGrid: true,
-        showCooGridControl: true,
-        showZoomControl: true,
-        showFullscreenControl: true,
         showLayersControl: true,
         showGotoControl: true,
-        showShareControl: true,
-        showSimbadPointerControl: true,
-
-        // En builds que lo soportan, esto enciende líneas de constelaciones de inicio:
-        showConstellationLines: true,
+        showZoomControl: true,
+        showFullscreenControl: true,
+        showShareControl: true
       });
 
-      // 1) Carga un “cat temporal” grande desde SIMBAD, ordenado por V (más brillante primero)
-      // 2) Nos quedamos con top N con V válida
-      // 3) Creamos un catálogo limpio con labels
-      const tmpOptions = {
-        limit: 200,
-        orderBy: 'V',
-        orderDir: 'ASC',
-        verbosity: 3,
-        onClick: 'showPopup',
-      };
+      // --- Constellation lines overlay (HiPS) ---
+      // Esto “regresa” las líneas aunque otras opciones internas fallen.
+      const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+      aladin.setOverlayImageLayer(constLines, "constellation-lines");
+      try { constLines.setAlpha(0.90); } catch (e) {}
 
-      A.catalogFromSimbad(center, radius, tmpOptions, (tmpCat) => {
-        const sources = (tmpCat && typeof tmpCat.getSources === 'function') ? tmpCat.getSources() : [];
-        const picked = pickBrightest(sources, n);
+      // --- ÚNICO label manual: "Vega" ---
+      const vegaCat = A.catalog({
+        name: "Manual label",
+        color: "#ffffff",
+        shape: "circle",
+        sourceSize: 14,
+        onClick: "showPopup",
 
-        const cat = A.catalog({
-          name: `Estrellas (top ${picked.length})`,
-          sourceSize: 14,
-          shape: 'circle',
-          color: '#2aa1ff',
-          onClick: 'showPopup',
-
-          // Labels:
-          displayLabel: true,
-          labelColumn: 'main_id',      // “Vega”, “Deneb”, etc. (cuando SIMBAD lo trae así)
-          labelColor: 'rgba(255,255,255,0.90)',
-          labelFont: '13px sans-serif',
-        });
-
-        cat.addSources(picked.map(s => A.source(s.ra, s.dec, s.data || {})));
-        aladin.addCatalog(cat);
-
-        setHud(`OK: ${picked.length} estrellas con nombre (SIMBAD, V mag)`);
-      }, (err) => {
-        console.error('SIMBAD error:', err);
-        setHud('No pude cargar SIMBAD (bloqueo/CORS o radio muy grande).');
+        // Labels:
+        displayLabel: true,
+        labelColumn: "name",
+        labelColor: "rgba(255,255,255,0.95)",
+        labelFont: "16px sans-serif"
       });
 
-      function vmagOf(s) {
-        const d = (s && s.data) ? s.data : {};
-        const candidates = [
-          d.V, d.Vmag, d.V_MAG, d.Vmag_1, d.Vmag1, d['V (mag)']
-        ];
-        for (const v of candidates) {
-          const x = parseFloat(v);
-          if (Number.isFinite(x)) return x;
-        }
-        return Infinity;
-      }
+      vegaCat.addSources([
+        A.source(VEGA_RA_DEG, VEGA_DEC_DEG, { name: "Vega" })
+      ]);
 
-      function pickBrightest(sources, count) {
-        return sources
-          .filter(s => s && Number.isFinite(s.ra) && Number.isFinite(s.dec))
-          .map(s => ({ s, v: vmagOf(s) }))
-          .filter(o => Number.isFinite(o.v) && o.v < 99)
-          .sort((a, b) => a.v - b.v)
-          .slice(0, count)
-          .map(o => o.s);
-      }
-    }).catch((e) => {
-      console.error(e);
-      setHud('Error inicializando Aladin Lite (ver consola).');
+      aladin.addCatalog(vegaCat);
+
+      setHud(`OK — líneas de constelación ON — label manual: Vega — fov=${fov}° — survey=${survey}`);
     });
   })();
   </script>
