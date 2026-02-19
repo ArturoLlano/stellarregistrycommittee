@@ -176,6 +176,8 @@
 
 
       
+      
+
       // --- Render stars (dynamic by FOV) + halo labels ---
       if (showStars) {
         const starsRes = results.find(r => r.kind === "stars");
@@ -287,8 +289,6 @@
         applyRule(pickRuleByFov(lastFov));
         requestAnimationFrame(tick);
       }
-
-
 
 
 
