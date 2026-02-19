@@ -98,6 +98,32 @@
         }
       }
 
+      if (showLines && constLines && typeof aladin.getFov === "function") {
+      let linesHidden = false;
+    
+      function setLinesHidden(hidden) {
+        if (hidden === linesHidden) return;
+        linesHidden = hidden;
+    
+        const a = hidden ? 0 : LINES_OPACITY_ON;
+        try { constLines.setOpacity(a); } catch (e) {
+          try { constLines.setAlpha(a); } catch (_) {}
+        }
+      }
+    
+      function readFovDeg() {
+        const f = aladin.getFov();               // [xDeg, yDeg]
+        return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+      }
+    
+      function tickLines() {
+        const fov = readFovDeg();
+        setLinesHidden(fov <= LINES_HIDE_FOV);
+        requestAnimationFrame(tickLines);
+      }
+    
+      tickLines();
+    }
 
       // ===== “La estrella” del registro (cambiante) via URL =====
       // Usa: ?ra=...&dec=...&star=Nombre%20de%20la%20estrella
