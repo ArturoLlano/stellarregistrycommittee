@@ -176,149 +176,117 @@
 
 
       
-      // --- Render stars (dynamic by FOV) + halo labels + font scale on tight FOV ---
-if (showStars) {
-  const starsRes = results.find(r => r.kind === "stars");
-  const allStars = normalizeStars(starsRes?.rows ?? []);
-
-  // Orden base: más brillantes primero
-  allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
-
-  // 1) Tablita de reglas por FOV (en grados)
-  const STAR_RULES = [
-    { fovMin: 100, mag: 2.0, max: 80  },
-    { fovMin: 60,  mag: 3.0, max: 140 },
-    { fovMin: 30,  mag: 4.0, max: 220 },
-    { fovMin: 15,  mag: 5.0, max: 320 },
-    { fovMin: 0,   mag: 6.0, max: 450 },
-  ];
-
-  // 2) Tipografía base + halo
-  const STAR_LABEL_PX = 14;   // blanco base
-  const HALO_EXTRA_PX = 2;    // halo = blanco + extra
-  const HALO_ALPHA = 0.85;    // opacidad del halo (0..1)
-
-  // 3) Dos catálogos: halo (debajo) + principal (encima)
-  const starHaloCat = A.catalog({
-    name: "Stars-halo",
-    sourceSize: 0,                 // sin marcador
-    shape: "circle",
-    color: "rgba(0,0,0,0)",
-    displayLabel: true,
-    labelColumn: "name",
-    labelColor: `rgba(0,0,0,${HALO_ALPHA})`,
-    labelFont: `${STAR_LABEL_PX + HALO_EXTRA_PX}px sans-serif`,
-    onClick: "showPopup"
-  });
-
-  const starCat = A.catalog({
-    name: "Stars",
-    color: "#ffffff",
-    shape: "circle",
-    sourceSize: 14,
-    onClick: "showPopup",
-    displayLabel: true,
-    labelColumn: "name",
-    labelColor: "rgba(255,255,255,0.95)",
-    labelFont: `bold ${STAR_LABEL_PX}px sans-serif`
-  });
-
-  // IMPORTANTE: primero halo, luego blanco
-  aladin.addCatalog(starHaloCat);
-  aladin.addCatalog(starCat);
-
-  // 4) Render function: limpia y vuelve a poblar según regla
-  let currentSources = [];
-  let lastRuleKey = "";
-  let lastFov = -1;
-
-  // Escala de fuente por FOV (solo tipografía)
-  let starFontScale = 1.0;
-
-  function pickRuleByFov(fovDeg) {
-    for (const r of STAR_RULES) {
-      if (fovDeg >= r.fovMin) return r;
-    }
-    return STAR_RULES[STAR_RULES.length - 1];
-  }
-
-  function applyFontScale(scale) {
-    const whitePx = Math.round(STAR_LABEL_PX * scale);
-    const haloPx  = Math.round((STAR_LABEL_PX + HALO_EXTRA_PX) * scale);
-
-    // Algunos builds soportan setOptions; si no existe, simplemente no cambia (pero no truena)
-    if (typeof starCat.setOptions === "function") {
-      starCat.setOptions({ labelFont: `bold ${whitePx}px sans-serif` });
-    }
-    if (typeof starHaloCat.setOptions === "function") {
-      starHaloCat.setOptions({ labelFont: `${haloPx}px sans-serif` });
-    }
-  }
-
-  function applyRule(rule) {
-    const mag = rule.mag;
-    const max = rule.max;
-
-    // Limpia lo anterior (de ambos catálogos)
-    for (const src of currentSources) {
-      try { starCat.remove(src); } catch (e) {}
-      try { starHaloCat.remove(src); } catch (e) {}
-    }
-    currentSources = [];
-
-    // Filtra y limita
-    const filtered = allStars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= mag) : false);
-    const finalStars = filtered.slice(0, max);
-
-    // Crea sources UNA sola vez y agrega a ambos
-    const sources = finalStars.map(s =>
-      A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v })
-    );
-
-    starHaloCat.addSources(sources);
-    starCat.addSources(sources);
-    currentSources = sources;
-
-    // HUD opcional
-    if (showHud) setHud(`OK — fov≈${Math.round(lastFov)}° — stars mag<=${mag}, max=${max}`);
-  }
-
-  // 5) Monitor de cambios de FOV
-  function readFovDeg() {
-    const f = aladin.getFov(); // [xDeg, yDeg]
-    return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
-  }
-
-  function tick() {
-    const fovNow = readFovDeg();
-
-    // ---- Fuente dinámica: FOV < 3° => 1.5× ----
-    const desiredScale = (fovNow < 3) ? 1.5 : 1.0;
-    if (desiredScale !== starFontScale) {
-      starFontScale = desiredScale;
-      applyFontScale(starFontScale);
-    }
-
-    // ---- Reglas por FOV: mag/max ----
-    if (Math.abs(fovNow - lastFov) > 0.25) {
-      lastFov = fovNow;
-      const rule = pickRuleByFov(fovNow);
-      const key = `${rule.fovMin}|${rule.mag}|${rule.max}`;
-      if (key !== lastRuleKey) {
-        lastRuleKey = key;
-        applyRule(rule);
+      // --- Render stars (dynamic by FOV) + halo labels ---
+      if (showStars) {
+        const starsRes = results.find(r => r.kind === "stars");
+        const allStars = normalizeStars(starsRes?.rows ?? []);
+      
+        // Orden base: más brillantes primero
+        allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
+      
+        // 1) Tablita de reglas por FOV (en grados)
+        const STAR_RULES = [
+          { fovMin: 100, mag: 2.0, max: 80  },
+          { fovMin: 60,  mag: 3.0, max: 140 },
+          { fovMin: 30,  mag: 4.0, max: 220 },
+          { fovMin: 15,  mag: 5.0, max: 320 },
+          { fovMin: 0,   mag: 6.0, max: 450 },
+        ];
+      
+        // 2) Dos catálogos: halo (debajo) + principal (encima)
+        const starHaloCat = A.catalog({
+          name: "Stars-halo",
+          sourceSize: 0,                 // sin marcador
+          shape: "circle",
+          color: "rgba(0,0,0,0)",
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(0,0,0,0.85)",
+          labelFont: "bold 14px sans-serif",  // un poco más grande = “contorno”
+          onClick: "showPopup"
+        });
+      
+        const starCat = A.catalog({
+          name: "Stars",
+          color: "#ffffff",
+          shape: "circle",
+          sourceSize: 14,
+          onClick: "showPopup",
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(255,255,255,0.95)",
+          labelFont: "14px sans-serif"
+        });
+      
+        // IMPORTANTE: primero halo, luego blanco
+        aladin.addCatalog(starHaloCat);
+        aladin.addCatalog(starCat);
+      
+        // 3) Render function: limpia y vuelve a poblar según regla
+        let currentSources = [];
+        let lastRuleKey = "";
+        let lastFov = -1;
+      
+        function pickRuleByFov(fovDeg) {
+          for (const r of STAR_RULES) {
+            if (fovDeg >= r.fovMin) return r;
+          }
+          return STAR_RULES[STAR_RULES.length - 1];
+        }
+      
+        function applyRule(rule) {
+          const mag = rule.mag;
+          const max = rule.max;
+      
+          // Limpia lo anterior (de ambos catálogos)
+          for (const src of currentSources) {
+            try { starCat.remove(src); } catch (e) {}
+            try { starHaloCat.remove(src); } catch (e) {}
+          }
+          currentSources = [];
+      
+          // Filtra y limita
+          const filtered = allStars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= mag) : false);
+          const finalStars = filtered.slice(0, max);
+      
+          // Crea sources UNA sola vez y agrega a ambos
+          const sources = finalStars.map(s =>
+            A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v })
+          );
+      
+          starHaloCat.addSources(sources);
+          starCat.addSources(sources);
+          currentSources = sources;
+      
+          // HUD opcional
+          if (showHud) setHud(OK — fov≈${Math.round(lastFov)}° — stars mag<=${mag}, max=${max});
+        }
+      
+        // 4) Monitor de cambios de FOV
+        function readFovDeg() {
+          const f = aladin.getFov(); // [xDeg, yDeg]
+          return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+        }
+      
+        function tick() {
+          const fovNow = readFovDeg();
+          if (Math.abs(fovNow - lastFov) > 0.25) {
+            lastFov = fovNow;
+            const rule = pickRuleByFov(fovNow);
+            const key = ${rule.fovMin}|${rule.mag}|${rule.max};
+            if (key !== lastRuleKey) {
+              lastRuleKey = key;
+              applyRule(rule);
+            }
+          }
+          requestAnimationFrame(tick);
+        }
+      
+        // Inicializa
+        lastFov = readFovDeg();
+        applyRule(pickRuleByFov(lastFov));
+        requestAnimationFrame(tick);
       }
-    }
-
-    requestAnimationFrame(tick);
-  }
-
-  // Inicializa
-  lastFov = readFovDeg();
-  applyFontScale((lastFov < 3) ? 1.5 : 1.0);
-  applyRule(pickRuleByFov(lastFov));
-  requestAnimationFrame(tick);
-}
 
 
 
