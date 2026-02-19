@@ -147,42 +147,103 @@
         return;
       }
 
-      // --- Render stars (marker + label) ---
-      if (showStars) {
-        const starsRes = results.find(r => r.kind === "stars");
-        const stars = normalizeStars(starsRes?.rows ?? []);
+      // --- Render stars (dynamic by FOV) ---
+if (showStars) {
+  const starsRes = results.find(r => r.kind === "stars");
+  const allStars = normalizeStars(starsRes?.rows ?? []);
 
-        // Filter by magnitude if provided
-        const filtered = (magLimit === null)
-          ? stars
-          : stars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= magLimit) : false);
+  // Orden base: más brillantes primero
+  allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
 
-        // Sort: brightest first
-        filtered.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
+  // 1) Define tu “tablita” de reglas por FOV (en grados)
+  // Ajusta estos valores a tu gusto:
+  const STAR_RULES = [
+    { fovMin: 100, mag: 2.0, max: 80  },
+    { fovMin: 60,  mag: 3.0, max: 140 },
+    { fovMin: 30,  mag: 4.0, max: 220 },
+    { fovMin: 15,  mag: 5.0, max: 320 },
+    { fovMin: 0,   mag: 6.0, max: 450 },
+  ];
 
-        // Cap
-        const finalStars = filtered.slice(0, maxStars);
+  // 2) Crea el catálogo UNA sola vez
+  const starCat = A.catalog({
+    name: "Stars",
+    color: "#ffffff",
+    shape: "circle",
+    sourceSize: 14,
+    onClick: "showPopup",
+    displayLabel: true,
+    labelColumn: "name",
+    labelColor: "rgba(255,255,255,0.95)",
+    labelFont: "14px sans-serif"
+  });
+  aladin.addCatalog(starCat);
 
-        const starCat = A.catalog({
-          name: "Stars",
-          color: "#ffffff",
-          shape: "circle",
-          sourceSize: 14,
-          onClick: "showPopup",
+  // 3) Render function: limpia y vuelve a poblar según regla
+  let currentSources = [];
+  let lastRuleKey = "";
 
-          displayLabel: true,
-          labelColumn: "name",
-          labelColor: "rgba(255,255,255,0.95)",
-          labelFont: "14px sans-serif"
-        });
+  function pickRuleByFov(fovDeg) {
+    // fovDeg: usa el mayor de X/Y para representar “qué tan abierto” estás
+    for (const r of STAR_RULES) {
+      if (fovDeg >= r.fovMin) return r;
+    }
+    return STAR_RULES[STAR_RULES.length - 1];
+  }
 
-        // Add sources
-        for (const s of finalStars) {
-          starCat.addSources([ A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v }) ]);
-        }
+  function applyRule(rule) {
+    // Si además quieres respetar ?mag= o ?max= manual, puedes mezclar aquí.
+    // En esta versión, manda la tabla.
+    const mag = rule.mag;
+    const max = rule.max;
 
-        aladin.addCatalog(starCat);
+    // Limpia lo anterior
+    for (const src of currentSources) {
+      try { starCat.remove(src); } catch (e) {}
+    }
+    currentSources = [];
+
+    // Filtra y limita
+    const filtered = allStars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= mag) : false);
+    const finalStars = filtered.slice(0, max);
+
+    // Crea sources y agrega
+    const sources = finalStars.map(s => A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v }));
+    starCat.addSources(sources);
+    currentSources = sources;
+
+    // HUD opcional
+    if (showHud) setHud(`OK — fov≈${Math.round(lastFov)}° — stars mag<=${mag}, max=${max}`);
+  }
+
+  // 4) Monitor de cambios de FOV (robusto, sin depender de eventos internos)
+  let lastFov = -1;
+  function readFovDeg() {
+    const f = aladin.getFov(); // [xDeg, yDeg] :contentReference[oaicite:3]{index=3}
+    return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+  }
+
+  function tick() {
+    const fovNow = readFovDeg();
+    // evita recalcular por microcambios
+    if (Math.abs(fovNow - lastFov) > 0.25) {
+      lastFov = fovNow;
+      const rule = pickRuleByFov(fovNow);
+      const key = `${rule.fovMin}|${rule.mag}|${rule.max}`;
+      if (key !== lastRuleKey) {
+        lastRuleKey = key;
+        applyRule(rule);
       }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Inicializa
+  lastFov = readFovDeg();
+  applyRule(pickRuleByFov(lastFov));
+  requestAnimationFrame(tick);
+}
+
 
       // --- Render constellation labels (label-only) ---
       if (showConstLabels) {
