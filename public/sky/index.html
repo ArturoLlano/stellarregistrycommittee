@@ -83,20 +83,21 @@
         showShareControl: true
       });
 
-     // --- Constellation lines overlay (HiPS) ---
-    if (showLines) {
-      const constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
-      aladin.setOverlayImageLayer(constLines, "constellation-lines");
-    
-      // ↓↓↓ PEGA ESTO AQUÍ (justo después de setOverlayImageLayer)
-      try { constLines.setOpacity(0.5); } catch (e) {
-        try { constLines.setAlpha(0.5); } catch (_) {}
+     // --- Constellation lines overlay (HiPS) + auto-hide on tight FOV ---
+      let constLines = null;
+      const LINES_HIDE_FOV = 10;          // <= 10° -> hide
+      const LINES_OPACITY_ON = 0.35;      // cuando está ON (ajústalo)
+      
+      if (showLines) {
+        constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+        aladin.setOverlayImageLayer(constLines, "constellation-lines");
+      
+        // set opacity (fallback alpha)
+        try { constLines.setOpacity(LINES_OPACITY_ON); } catch (e) {
+          try { constLines.setAlpha(LINES_OPACITY_ON); } catch (_) {}
+        }
       }
-      // ↑↑↑
-    
-      // (Opcional) elimina o comenta tu alpha anterior para no sobreescribirlo
-      // try { constLines.setAlpha(0.90); } catch (e) {}
-    }
+
 
       // ===== “La estrella” del registro (cambiante) via URL =====
       // Usa: ?ra=...&dec=...&star=Nombre%20de%20la%20estrella
