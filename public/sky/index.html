@@ -293,7 +293,7 @@ if (showStars) {
     const fovNow = readFovDeg();
 
     // ---- Fuente dinámica: FOV < 3° => 1.5× ----
-    const desiredScale = (fovNow < 3) ? 1.5 : 1.0;
+    const desiredScale = (fovNow < 3) ? 5.0 : 1.0;
     if (desiredScale !== starFontScale) {
       starFontScale = desiredScale;
       applyFontScale(starFontScale);
@@ -315,7 +315,7 @@ if (showStars) {
 
   // Inicializa
   lastFov = readFovDeg();
-  applyFontScale((lastFov < 3) ? 1.5 : 1.0);
+  applyFontScale((lastFov < 3) ? 5 : 1.0);
   applyRule(pickRuleByFov(lastFov));
   requestAnimationFrame(tick);
 }
@@ -348,6 +348,30 @@ if (showStars) {
         }
 
         aladin.addCatalog(constCat);
+        // --- Font scale for constellation labels: FOV > 100° => 0.2× (PRUEBA) ---
+        const CONST_LABEL_PX = 20; // asegúrate de que coincide con tu labelFont base
+        let constFontScale = 1.0;
+        
+        function applyConstFontScale(scale) {
+          const px = Math.max(6, Math.round(CONST_LABEL_PX * scale)); // mínimo 6px para que no desaparezca totalmente
+          if (typeof constCat.setOptions === "function") {
+            constCat.setOptions({ labelFont: `${px}px sans-serif` });
+          }
+        }
+        
+        (function tickConstLabels() {
+          const f = aladin.getFov();
+          const fovNow = Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+        
+          const desired = (fovNow > 100) ? 0.2 : 1.0; // <-- PRUEBA fuerte
+          if (desired !== constFontScale) {
+            constFontScale = desired;
+            applyConstFontScale(constFontScale);
+          }
+        
+          requestAnimationFrame(tickConstLabels);
+        })();
+
       }
 
       // HUD summary
