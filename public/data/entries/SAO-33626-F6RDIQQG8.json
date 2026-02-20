@@ -1,0 +1,36 @@
+{
+  "id": "SAO-33626-F6RDIQQG8",
+  "status": "active",
+  "recorded_at_utc": "2026-02-20T18:03:32.995156Z",
+  "designation": {
+    "title": "Registry Entry — SAO 33626",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "33626"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "21 38 57.625",
+      "dec_dms": "+57 29 20.62"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano"
+  }
+}
