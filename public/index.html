@@ -16,58 +16,102 @@
   <link rel="icon" type="image/png" sizes="128x128" href="/assets/brand/favicon/tsrc-mark-128.png" />
   <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon/tsrc-mark.svg" />
 
+  <!-- TSRC global UI -->
   <link rel="stylesheet" href="/assets/css/tsrc.css" />
   <script defer src="/assets/js/tsrc-ui.js"></script>
 </head>
+
 <body>
-  <header class="header">
-    <div class="wrap">
-      <div class="brand">
-        <div class="brand__name">The Stellar Registry Committee</div>
-        <nav class="brand__nav">
-          <a href="/legal/disclaimer/">Disclaimer</a>
-          <a href="/r/">Resolver</a>
-        </nav>
-      </div>
-      <h1 class="h1">Private Commemorative Registry</h1>
-      <p class="lede">
-        Formal registry records for symbolic dedications. Entries are presented with standardized astronomical fields
-        (RA/Dec, epoch, and catalog references when available).
-      </p>
+  <!-- Sticky / glass header -->
+  <header class="site-header header">
+    <div class="container wrap bar">
+      <a class="brand" href="/">
+        <img src="/assets/brand/favicon/tsrc-mark-64.png" alt="TSRC mark" />
+        <div class="title">
+          <strong>The Stellar Registry Committee</strong>
+          <span>Private commemorative registry</span>
+        </div>
+      </a>
+
+      <nav class="nav brand__nav" aria-label="Primary">
+        <a href="/">Resolver</a>
+        <a href="/__app/registry.html">Registry UI</a>
+        <a href="/legal/disclaimer/">Disclaimer</a>
+      </nav>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="card">
-      <form data-record-lookup>
-        <label class="label" for="record_id">Find a record by Registry ID</label>
-        <div class="row">
-          <input class="input" id="record_id" name="record_id" placeholder="e.g., EXAMPLE-0001" autocomplete="off" />
-          <button class="btn btn--primary" type="submit">Open record</button>
-        </div>
-        <div class="note" data-msg></div>
-      </form>
-    </section>
+  <main class="section">
+    <div class="container wrap stack">
+      <div>
+        <div class="kicker">Private Commemorative Registry</div>
+        <h1 class="h1">Locate a registry record</h1>
+        <p class="lead">
+          Formal registry records for symbolic dedications. Entries are presented with standardized astronomical fields
+          (<span class="mono">RA/Dec</span>, epoch, and catalog references when available).
+        </p>
+      </div>
 
-    <section class="card">
-      <h2 style="margin:0 0 8px;">Standards & permanence</h2>
-      <ul style="margin:0; padding-left:18px;">
-        <li>QR codes resolve via <code>/r/&lt;ID&gt;</code> to the canonical record at <code>/registry/&lt;ID&gt;</code>.</li>
-        <li>Records present coordinates as RA (h m s) and Dec (° ′ ″), with epoch stated (e.g., J2000).</li>
-        <li>Catalog references (e.g., SAO) are stored as structured fields for future interoperability.</li>
-      </ul>
-      <p class="note" style="margin-top:10px;">
-        This is a private commemorative registry and is not affiliated with the International Astronomical Union (IAU).
-      </p>
-    </section>
+      <!-- Resolver card -->
+      <section class="card hover-glow">
+        <div class="card-hd">
+          <h2 class="h2">Record lookup</h2>
+          <div class="muted small">
+            Canonical destination: <span class="mono">/registry/&lt;ID&gt;</span> (QR resolves via <span class="mono">/r/&lt;ID&gt;</span>).
+          </div>
+        </div>
+
+        <div class="card-bd">
+          <!-- KEEP: your existing resolver logic hooks -->
+          <form data-record-lookup class="stack" style="max-width: 640px;">
+            <label for="record_id">Find a record by Registry ID</label>
+
+            <!-- Use btn-row for a clean inline input+button layout -->
+            <div class="btn-row" style="align-items:center;">
+              <input
+                class="input"
+                id="record_id"
+                name="record_id"
+                placeholder="e.g., SAO-123456-AB12"
+                autocomplete="off"
+              />
+              <!-- Keep original class for compatibility, add new class for styling -->
+              <button class="btn btn-primary btn--primary" type="submit">Open record</button>
+            </div>
+
+            <!-- KEEP: home.js likely writes messages here -->
+            <div class="muted small" style="margin-top: 10px;" data-msg></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Standards card -->
+      <section class="card hover-glow">
+        <div class="card-hd">
+          <h2 class="h2">Standards & permanence</h2>
+          <div class="muted small">Stable routing + standardized astronomical fields.</div>
+        </div>
+
+        <div class="card-bd">
+          <ul style="margin:0; padding-left:18px;">
+            <li>QR codes resolve via <span class="mono">/r/&lt;ID&gt;</span> to the canonical record at <span class="mono">/registry/&lt;ID&gt;</span>.</li>
+            <li>Records present coordinates as RA (h m s) and Dec (° ′ ″), with epoch stated (e.g., J2000).</li>
+            <li>Catalog references (e.g., SAO) are stored as structured fields for future interoperability.</li>
+          </ul>
+
+          <p class="muted small" style="margin-top: 12px;">
+            This is a private commemorative registry and is not affiliated with the International Astronomical Union (IAU).
+          </p>
+        </div>
+      </section>
+
+      <footer class="site-footer footer">
+        <div class="muted small">© The Stellar Registry Committee. Private commemorative registry.</div>
+      </footer>
+    </div>
   </main>
 
-  <footer class="footer">
-    <div class="wrap">
-      <div class="small">© The Stellar Registry Committee. Private commemorative registry.</div>
-    </div>
-  </footer>
-
+  <!-- KEEP: your existing page logic -->
   <script type="module" src="/assets/js/pages/home.js"></script>
 </body>
 </html>
