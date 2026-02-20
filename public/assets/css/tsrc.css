@@ -720,3 +720,46 @@ body.page-home::before{
   .home-topbar{ flex-direction: column; align-items: stretch; }
   .home-nav{ justify-content: center; flex-wrap: wrap; }
 }
+/* ===== Optional nebula image background (lightweight) ===== */
+
+/* 1) Default: no image (keeps current CSS nebula) */
+:root{
+  --tsrc-nebula: none; /* will be overridden per-page */
+}
+
+/* 2) Enable nebula image on home only */
+body.page-home{
+  --tsrc-nebula: url("/assets/bg/nebula.webp");
+}
+
+/* 3) Compose: image + gradients + stars (keeps it institutional) */
+body.page-home::before{
+  background:
+    /* Nebula image layer (subtle) */
+    var(--tsrc-nebula) center / cover no-repeat,
+
+    /* Color shaping + vignette */
+    radial-gradient(1200px 820px at 50% 45%, rgba(11, 61, 145, 0.55), transparent 62%),
+    radial-gradient(900px 650px at 60% 60%, rgba(0, 237, 255, 0.10), transparent 60%),
+    radial-gradient(1100px 780px at 35% 75%, rgba(252, 61, 33, 0.07), transparent 62%),
+
+    /* Minimal stars */
+    radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.70) 50%, transparent 52%),
+    radial-gradient(1px 1px at 24% 70%, rgba(255,255,255,0.40) 50%, transparent 52%),
+    radial-gradient(1px 1px at 42% 36%, rgba(255,255,255,0.50) 50%, transparent 52%),
+    radial-gradient(1px 1px at 58% 64%, rgba(255,255,255,0.30) 50%, transparent 52%),
+    radial-gradient(1px 1px at 78% 44%, rgba(255,255,255,0.45) 50%, transparent 52%),
+    radial-gradient(1px 1px at 88% 78%, rgba(255,255,255,0.30) 50%, transparent 52%),
+
+    /* Base */
+    linear-gradient(180deg, #05070a 0%, #0b0f16 55%, #05070a 100%);
+
+  /* Make the real photo present but not loud */
+  filter: saturate(0.95) contrast(1.02);
+  opacity: 0.95;
+}
+
+/* Optional: “focus” the image behind the central panel */
+body.page-home::before{
+  mask-image: radial-gradient(80% 65% at 50% 45%, rgba(0,0,0,1), rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.35) 100%);
+}
