@@ -679,3 +679,44 @@ body.page-home::before{
   .input-group{ flex-direction: column; align-items: stretch; }
   .input-group .btn{ width:100%; }
 }
+/* --- Home topbar brand sizing (fix oversized SVG) --- */
+.home-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(17,17,17,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.home-brand{ display:flex; align-items:center; gap: 10px; }
+
+.home-brand-img{
+  height: 18px;        /* <- controla el tamaño SIEMPRE */
+  max-height: 18px;
+  width: auto;
+  max-width: 260px;
+  display:block;
+  opacity: 0.96;
+}
+
+.home-nav{ display:flex; gap: 14px; align-items:center; }
+.home-nav a{
+  color: rgba(255,255,255,0.92);
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.home-nav a:hover{
+  border-color: rgba(0,237,255,0.25);
+  box-shadow: 0 0 0 1px rgba(0,237,255,0.10);
+  text-decoration: none;
+}
+
+@media (max-width: 640px){
+  .home-topbar{ flex-direction: column; align-items: stretch; }
+  .home-nav{ justify-content: center; flex-wrap: wrap; }
+}
