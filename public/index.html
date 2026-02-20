@@ -66,18 +66,20 @@
           <!-- KEEP: your existing resolver logic hooks -->
           <form data-record-lookup class="stack" style="max-width: 640px;">
             <label for="record_id">Find a record by Registry ID</label>
-
-            <!-- Use btn-row for a clean inline input+button layout -->
-            <div class="btn-row" style="align-items:center;">
-              <input
-                class="input"
-                id="record_id"
-                name="record_id"
-                placeholder="e.g., SAO-123456-AB12"
-                autocomplete="off"
-              />
-              <!-- Keep original class for compatibility, add new class for styling -->
-              <button class="btn btn-primary btn--primary" type="submit">Open record</button>
+        
+            <div class="input-group">
+                  <input
+                    class="input"
+                    id="record_id"
+                    name="record_id"
+                    placeholder="e.g., SAO-123456-AB12"
+                    autocomplete="off"
+                  />
+                  <button class="btn btn-primary btn--primary" type="submit">Open record</button>
+                </div>
+            
+                <div class="muted small" style="margin-top: 10px;" data-msg></div>
+              </form>
             </div>
 
             <!-- KEEP: home.js likely writes messages here -->
