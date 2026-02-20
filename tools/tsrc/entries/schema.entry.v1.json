@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tsrc.entry.v1",
+  "title": "TSRC Entry (v1)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "id",
+    "sao",
+    "coordinates",
+    "inscription",
+    "recorded_by",
+    "sponsor",
+    "recorded_at",
+    "certificate"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "tsrc.entry.v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^SAO-\\d+-[A-Za-z0-9]+$"
+    },
+    "sao": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ra", "dec"],
+      "properties": {
+        "ra": { "type": "string", "minLength": 1, "description": "Right Ascension in HMS string form, e.g. '18h 36m 56.3s'." },
+        "dec": { "type": "string", "minLength": 1, "description": "Declination in DMS string form, e.g. '+38° 47′ 01″'." }
+      }
+    },
+    "inscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "motto"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "motto": { "type": "string", "minLength": 1 }
+      }
+    },
+    "recorded_by": { "type": "string", "minLength": 1 },
+    "sponsor": { "type": "string", "minLength": 1 },
+    "recorded_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 timestamp, e.g. '2026-02-19T10:15:00-06:00'."
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template_id", "qr_url"],
+      "properties": {
+        "template_id": { "type": "string", "minLength": 1 },
+        "qr_url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Absolute URL encoded in the QR code. Phase 1 requires the pages.dev /r/<ID> URL."
+        }
+      }
+    }
+  }
+}

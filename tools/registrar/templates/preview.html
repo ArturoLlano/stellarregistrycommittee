@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% set title = "Preview — Registrar" %}
+
+{% block content %}
+  <section class="card">
+    <h1>Preview JSON</h1>
+
+    <div class="meta">
+      <div><strong>Repo root:</strong> <code>{{ repo_root }}</code></div>
+      <div><strong>Entries dir:</strong> <code>{{ entries_dir }}</code></div>
+      <div><strong>Generated ID:</strong> <code>{{ entry_id }}</code></div>
+      <div><strong>Registry URL:</strong> <code>/registry/{{ entry_id }}</code></div>
+      <div><strong>QR URL:</strong> <code>/r/{{ entry_id }}</code></div>
+    </div>
+
+    {% if lookup_error %}
+      <div class="alert alert--warn">
+        <strong>Coordinate lookup warning:</strong> {{ lookup_error }}<br/>
+        The entry will still be created, but coordinates may be blank.
+      </div>
+    {% endif %}
+
+    <pre class="code">{{ payload_json }}</pre>
+
+    <form method="post" action="/commit">
+      <input type="hidden" name="payload_b64" value="{{ payload_b64 }}" />
+      <div class="actions">
+        <button type="button" class="btn btn--ghost" onclick="history.back()">Back</button>
+        <button type="submit" class="btn">Confirm & Commit</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

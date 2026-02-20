@@ -1,0 +1,6 @@
+# Local virtualenv + tool state
+.venv/
+_drafts/
+__pycache__/
+*.pyc
+*.log

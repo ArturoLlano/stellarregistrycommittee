@@ -1,0 +1,70 @@
+{
+  "page": { "width_pt": 612, "height_pt": 792 },
+
+  "fonts": {
+    "body": "Helvetica",
+    "body_bold": "Helvetica-Bold",
+    "mono": "Courier"
+  },
+
+  "blocks": [
+    {
+      "type": "text",
+      "text": "THE STELLAR REGISTRY COMMITTEE",
+      "x": 306,
+      "y": 730,
+      "font": "bold",
+      "size": 18,
+      "align": "center"
+    },
+    {
+      "type": "text",
+      "text": "Private Commemorative Star Dedication Record",
+      "x": 306,
+      "y": 708,
+      "font": "Helvetica",
+      "size": 11,
+      "align": "center"
+    },
+    {
+      "type": "text",
+      "text": "This certificate records a private commemorative dedication entered into the TSRC registry.",
+      "x": 306,
+      "y": 682,
+      "font": "Helvetica",
+      "size": 10,
+      "align": "center"
+    },
+
+    { "type": "kv", "label": "INSCRIPTION NAME", "key": "inscription.name", "x": 90, "y": 630, "label_size": 8, "value_size": 14, "max_width": 420 },
+    { "type": "kv", "label": "INSCRIPTION MOTTO", "key": "inscription.motto", "x": 90, "y": 580, "label_size": 8, "value_size": 11, "max_width": 420 },
+
+    { "type": "kv", "label": "SAO CATALOG REFERENCE", "key": "sao", "x": 90, "y": 520, "label_size": 8, "value_size": 11, "max_width": 240 },
+    { "type": "kv", "label": "RIGHT ASCENSION (J2000)", "key": "coordinates.ra", "x": 90, "y": 470, "label_size": 8, "value_size": 11, "max_width": 240 },
+    { "type": "kv", "label": "DECLINATION (J2000)", "key": "coordinates.dec", "x": 90, "y": 420, "label_size": 8, "value_size": 11, "max_width": 240 },
+
+    { "type": "kv", "label": "RECORDED BY", "key": "recorded_by", "x": 330, "y": 520, "label_size": 8, "value_size": 11, "max_width": 210 },
+    { "type": "kv", "label": "SPONSOR", "key": "sponsor", "x": 330, "y": 470, "label_size": 8, "value_size": 11, "max_width": 210 },
+
+    { "type": "kv", "label": "REGISTRY ID", "key": "id", "x": 330, "y": 420, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 210 },
+    { "type": "kv", "label": "RECORDED AT", "key": "recorded_at", "x": 330, "y": 380, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 210 }
+  ],
+
+  "qr": {
+    "x": 450,
+    "y": 85,
+    "size": 110,
+    "label": "Verify record (QR)",
+    "label_font": "Helvetica",
+    "label_size": 8
+  },
+
+  "disclaimer": {
+    "x": 72,
+    "y": 70,
+    "width": 360,
+    "font": "Helvetica",
+    "size": 7,
+    "leading": 9
+  }
+}

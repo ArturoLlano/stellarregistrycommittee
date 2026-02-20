@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set title = "Create Entry — Registrar" %}
+
+{% block content %}
+  <section class="card">
+    <h1>Create a Registry Entry</h1>
+    <p class="muted">
+      Creates a new JSON entry in <code>public/data/entries/</code>, then git add/commit/push.
+    </p>
+
+    {% if error %}
+      <div class="alert alert--error">{{ error }}</div>
+    {% endif %}
+
+    {% if duplicates %}
+      <div class="alert alert--warn">
+        <strong>Duplicate detected:</strong> SAO {{ sao }} already exists. No new entry will be created.
+        <ul>
+          {% for d in duplicates %}
+            <li>
+              <code>{{ d.file_name }}</code>
+              {% if d.entry_id %}(ID: <code>{{ d.entry_id }}</code>){% endif %}
+              — matched by <em>{{ d.reason }}</em>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="post" action="/preview" class="form">
+      <div class="grid">
+        <label>
+          <span>SAO number <span class="req">*</span></span>
+          <input name="sao" inputmode="numeric" autocomplete="off" required
+                 value="{{ (form.sao if form else '') }}" placeholder="e.g., 12346" />
+        </label>
+
+        <label>
+          <span>Inscription name <span class="req">*</span></span>
+          <input name="inscription_name" required
+                 value="{{ (form.inscription_name if form else '') }}" placeholder="e.g., Linda Mariana" />
+        </label>
+
+        <label>
+          <span>Inscription motto (optional)</span>
+          <input name="inscription_motto"
+                 value="{{ (form.inscription_motto if form else '') }}" placeholder="e.g., Luz de mi vida." />
+        </label>
+
+        <label>
+          <span>Recorded by (optional)</span>
+          <input name="recorded_by"
+                 value="{{ (form.recorded_by if form else '') }}" placeholder="e.g., Anonymous" />
+        </label>
+
+        <label>
+          <span>Sponsor (optional)</span>
+          <input name="sponsor"
+                 value="{{ (form.sponsor if form else '') }}" placeholder="e.g., Organization / Person" />
+        </label>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="do_lookup" {% if not form or form.do_lookup %}checked{% endif %} />
+        <span>Attempt online SAO coordinate lookup (VizieR I/131A)</span>
+      </label>
+
+      <div class="actions">
+        <button type="submit" class="btn">Generate Preview</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ title or "Registry Entry Registrar" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <div class="brand">
+          <div class="brand__title">The Stellar Registry Committee</div>
+          <div class="brand__subtitle">Local Registry Entry Registrar (Phase 1)</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="fineprint">
+          Private commemorative registry. Not affiliated with the IAU.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

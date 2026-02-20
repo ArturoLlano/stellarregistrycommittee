@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set title = "Result — Registrar" %}
+
+{% block content %}
+  <section class="card">
+    <h1>Entry Created</h1>
+
+    <div class="meta">
+      <div><strong>ID:</strong> <code>{{ entry_id }}</code></div>
+      <div><strong>SAO:</strong> <code>{{ sao }}</code></div>
+      <div><strong>File:</strong> <code>{{ file_path }}</code></div>
+      <div><strong>Registry URL:</strong> <code>{{ registry_url }}</code></div>
+      <div><strong>QR URL:</strong> <code>{{ qr_url }}</code></div>
+    </div>
+
+    {% if git.ok %}
+      <div class="alert alert--ok">
+        <strong>Git push succeeded.</strong>
+      </div>
+    {% else %}
+      <div class="alert alert--warn">
+        <strong>Git step failed.</strong> The JSON file was created and kept on disk.
+        <div class="small">{{ git.error }}</div>
+        {% if git.hint %}
+          <div class="small"><strong>Hint:</strong> {{ git.hint }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <h2>Git steps</h2>
+    <ul>
+      {% for s in git.steps %}
+        <li><code>{{ s }}</code></li>
+      {% endfor %}
+    </ul>
+
+    <h2>JSON (saved)</h2>
+    <pre class="code">{{ payload_json }}</pre>
+  </section>
+{% endblock %}
