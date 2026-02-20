@@ -8,10 +8,10 @@
   },
   "object": {
     "catalog": [
-      {
-        "scheme": "SAO",
-        "id": "33626"
-      }
+      { "scheme": "SAO", "id": "33626" },
+      { "scheme": "HD",  "id": "123456" },
+      { "scheme": "DM",  "id": "BD+57 1234" },
+      { "scheme": "GC",  "id": "98765" }
     ],
     "inscription": {
       "name": "Linda Mariana",
@@ -20,17 +20,50 @@
     "coordinates": {
       "epoch": "J2000",
       "ra_hms": "21 38 57.625",
-      "dec_dms": "+57 29 20.62"
+      "dec_dms": "+57 29 20.62",
+      "ra_deg": 324.7401042,
+      "dec_deg": 57.4890611
+    },
+    "constellation": {
+      "iau_abbr": "Cyg",
+      "name": "Cygnus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    },
+    "photometry": {
+      "v_mag": 7.2,
+      "p_mag": 7.6,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "A0",
+      "source": "I/131A"
+    },
+    "multiplicity_variability": {
+      "rem_code": 2,
+      "rem_meaning": "Double star in Aitken's Double Star Catalogue",
+      "hd_component_code": 1
+    },
+    "astrometry": {
+      "proper_motion": {
+        "pm_ra2000_s_per_yr": 0.0003,
+        "pm_dec2000_arcsec_per_yr": -0.012
+      },
+      "errors": {
+        "pos_1950_10mas": 12
+      },
+      "source": "I/131A"
     }
   },
-  "legal": {
-    "disclaimer_ref": "/legal/disclaimer/"
-  },
+  "legal": { "disclaimer_ref": "/legal/disclaimer/" },
   "notes": [
-    "Coordinates retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A).",
+    "Constellation computed from J2000 coordinates using IAU boundaries."
   ],
   "provenance": {
     "recorded_by": "Arturo Llano",
-    "sponsor": "Arturo Llano"
+    "sponsor": "Arturo Llano",
+    "sources": [
+      { "service": "CDS VizieR", "catalog": "I/131A", "table": "sao" }
+    ]
   }
 }
