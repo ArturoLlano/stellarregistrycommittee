@@ -10,5 +10,8 @@
   "layout": "layout.json",
   "disclaimer": "disclaimer.txt",
   "immutable_bundle": true,
+  "strings": {
+    "post_name_statement_en": "Be it further known that The Stellar Registry Committee will record and preserve the name assigned to this star."
+  },
   "notes": "Template bundles are immutable. Any visual change must create a new folder, e.g. tsrc-letter-v2."
 }

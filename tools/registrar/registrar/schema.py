@@ -81,7 +81,73 @@ def _append_catalog_id(catalog: list[dict[str, str]], scheme: str, value: str | 
         if str(c.get("scheme", "")).upper() == scheme.upper() and str(c.get("id", "")).strip() == v:
             return
     catalog.append({"scheme": scheme, "id": v})
+def _fmt_ra_for_legend(ra_hms: str) -> str | None:
+    if not ra_hms:
+        return None
+    parts = ra_hms.strip().split()
+    if len(parts) != 3:
+        return None
+    h, m, s = parts
+    try:
+        # seconds with 2 decimals
+        s2 = f"{float(s):.2f}"
+    except Exception:
+        s2 = s
+    return f"{h.zfill(2)}h {m.zfill(2)}m {s2}s"
 
+
+def _fmt_dec_for_legend(dec_dms: str) -> str | None:
+    if not dec_dms:
+        return None
+    parts = dec_dms.strip().split()
+    if len(parts) != 3:
+        return None
+
+    d, m, s = parts
+
+    # keep sign in degrees
+    sign = ""
+    if d.startswith("+"):
+        sign = "+"
+        d = d[1:]
+    elif d.startswith("-"):
+        sign = "-"
+        d = d[1:]
+
+    try:
+        s2 = f"{float(s):.2f}"
+    except Exception:
+        s2 = s
+
+    # requested symbols: º ' ''
+    return f"{sign}{d}º {m.zfill(2)}' {s2}''"
+
+
+def _build_legend_en(*, sao: int, obj: dict) -> str | None:
+    coords = obj.get("coordinates") or {}
+    phot = obj.get("photometry") or {}
+    spec = obj.get("spectral") or {}
+
+    vmag = phot.get("v_mag")
+    sptype = spec.get("type")
+
+    ra = _fmt_ra_for_legend(coords.get("ra_hms", ""))
+    dec = _fmt_dec_for_legend(coords.get("dec_dms", ""))
+
+    if not ra or not dec:
+        return None  # without coords, legend isn't useful
+
+    chunks = [f"This is to register the star designated: SAO {sao}"]
+
+    if vmag is not None:
+        chunks.append(f"with visual magnitude: {vmag}")
+    if sptype:
+        chunks.append(f"spectral type: {sptype}")
+
+    chunks.append(f"located at the coordinates: RA: {ra}, and Dec {dec}, to be recorded in this registry as:")
+
+    # Join with commas exactly in the style you wrote
+    return ", ".join(chunks[:-1]) + ", " + chunks[-1]
 
 def build_entry_payload(
     *,
@@ -195,4 +261,13 @@ def build_entry_payload(
         else:
             obj["constellation"] = c
 
+    payload["certificate"] = {
+        "template_id": "tsrc-letter-v1",
+        "lang": "en",
+    }
+
+    legend = _build_legend_en(sao=sao, obj=obj)
+    if legend:
+        payload["certificate"]["legend_en"] = legend
+        
     return payload
