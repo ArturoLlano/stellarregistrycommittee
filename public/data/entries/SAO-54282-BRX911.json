@@ -1,0 +1,65 @@
+{
+  "id": "SAO-54282-BRX911",
+  "status": "active",
+  "recorded_at_utc": "2026-02-23T16:24:13.335309Z",
+  "designation": {
+    "title": "Registry Entry — SAO 54282",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "54282"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "00 56 54.928",
+      "dec_dms": "+35 23 32.17",
+      "ra_deg": 14.22886667,
+      "dec_deg": 35.39226944
+    },
+    "photometry": {
+      "v_mag": 8.0,
+      "p_mag": 8.4,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "A5",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "And",
+      "name": "Andromeda",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 54282, with visual magnitude: 8.0, spectral type: A5, located at the coordinates: RA: 00h 56m 54.93s, and Dec +35º 23' 32.17'', to be recorded in this registry as:"
+  }
+}
