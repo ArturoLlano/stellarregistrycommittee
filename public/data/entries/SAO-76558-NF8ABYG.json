@@ -1,0 +1,64 @@
+{
+  "id": "SAO-76558-NF8ABYG",
+  "status": "active",
+  "recorded_at_utc": "2026-02-23T19:38:24.424107Z",
+  "designation": {
+    "title": "Registry Entry — SAO 76558",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "76558"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "04 20 21.255",
+      "dec_dms": "+27 21 02.60",
+      "ra_deg": 65.0885625,
+      "dec_deg": 27.35072222
+    },
+    "photometry": {
+      "v_mag": 5.1,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "K0",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Tau",
+      "name": "Taurus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano VP",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 76558, with visual magnitude: 5.1, spectral type: K0, and located at the coordinates: RA: 04h 20m 21.25s, and Dec +27º 21' 2.60'', to be recorded in this registry as:"
+  }
+}
