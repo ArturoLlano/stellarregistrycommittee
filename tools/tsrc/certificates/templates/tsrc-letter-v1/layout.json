@@ -1,68 +1,81 @@
 {
-  "page": { "width_pt": 612, "height_pt": 792 },
+  "units": "mm",
+  "page": { "width": 279.4, "height": 215.9 },
 
   "fonts": {
-    "body": "Helvetica",
-    "body_bold": "Helvetica-Bold",
-    "mono": "Courier"
+    "body": "Helvetica-Oblique",
+    "body_bold": "Helvetica-BoldOblique",
+    "mono": "Courier-Oblique"
   },
 
   "blocks": [
     {
-      "type": "text",
-      "text": "THE STELLAR REGISTRY COMMITTEE",
-      "x": 306,
-      "y": 730,
-      "font": "bold",
-      "size": 18,
-      "align": "center"
+      "type": "kv",
+      "label": "",
+      "key": "inscription.name",
+      "x": 139.7,
+      "y": 122,
+      "label_size": 8,
+      "value_size": 14,
+      "max_width": 170,
+      "label_align": "center",
+      "value_align": "center"
     },
     {
-      "type": "text",
-      "text": "Private Commemorative Star Dedication Record",
-      "x": 306,
-      "y": 708,
-      "font": "Helvetica",
-      "size": 11,
-      "align": "center"
+      "type": "kv",
+      "label": "",
+      "key": "inscription.motto",
+      "x": 139.7,
+      "y": 110,
+      "label_size": 8,
+      "value_size": 11,
+      "max_width": 170,
+
+      "wrap": true,
+      "max_lines": 3,
+      "value_leading": 13,
+
+      "shrink_on_overflow": true,
+      "shrink_step_pt": 1,
+      "min_value_size_pt": 8,
+
+      "label_align": "center",
+      "value_align": "center"
     },
-    {
-      "type": "text",
-      "text": "This certificate records a private commemorative dedication entered into the TSRC registry.",
-      "x": 306,
-      "y": 682,
-      "font": "Helvetica",
-      "size": 10,
-      "align": "center"
-    },
 
-    { "type": "kv", "label": "INSCRIPTION NAME", "key": "inscription.name", "x": 90, "y": 630, "label_size": 8, "value_size": 14, "max_width": 420 },
-    { "type": "kv", "label": "INSCRIPTION MOTTO", "key": "inscription.motto", "x": 90, "y": 580, "label_size": 8, "value_size": 11, "max_width": 420 },
+    { "type": "kv", "label": "SAO CATALOG REFERENCE", "key": "sao", "x": 70, "y": 92, "label_size": 8, "value_size": 11, "max_width": 90 },
+    { "type": "kv", "label": "RIGHT ASCENSION (J2000)", "key": "coordinates.ra", "x": 70, "y": 80, "label_size": 8, "value_size": 11, "max_width": 90 },
+    { "type": "kv", "label": "DECLINATION (J2000)", "key": "coordinates.dec", "x": 70, "y": 68, "label_size": 8, "value_size": 11, "max_width": 90 },
 
-    { "type": "kv", "label": "SAO CATALOG REFERENCE", "key": "sao", "x": 90, "y": 520, "label_size": 8, "value_size": 11, "max_width": 240 },
-    { "type": "kv", "label": "RIGHT ASCENSION (J2000)", "key": "coordinates.ra", "x": 90, "y": 470, "label_size": 8, "value_size": 11, "max_width": 240 },
-    { "type": "kv", "label": "DECLINATION (J2000)", "key": "coordinates.dec", "x": 90, "y": 420, "label_size": 8, "value_size": 11, "max_width": 240 },
 
-    { "type": "kv", "label": "RECORDED BY", "key": "recorded_by", "x": 330, "y": 520, "label_size": 8, "value_size": 11, "max_width": 210 },
-    { "type": "kv", "label": "SPONSOR", "key": "sponsor", "x": 330, "y": 470, "label_size": 8, "value_size": 11, "max_width": 210 },
+    { "type": "kv", "label": "SPONSOR", "key": "sponsor", "x": 175, "y": 80, "label_size": 8, "value_size": 11, "max_width": 85 },
 
-    { "type": "kv", "label": "REGISTRY ID", "key": "id", "x": 330, "y": 420, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 210 },
-    { "type": "kv", "label": "RECORDED AT", "key": "recorded_at", "x": 330, "y": 380, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 210 }
+    { "type": "kv", "label": "REGISTRY ID", "key": "id", "x": 175, "y": 68, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 85 },
+
+    { "type": "kv", "label": "Recorded this day:", "key": "recorded_at", "x": 43.45, "y": 26,
+      "label_size": 12, "value_size": 14, "max_width": 85, "format": "date_long_en",
+      "label_align": "center", "value_align": "center" },
+
+    { "type": "kv", "label": "Recorded by:", "key": "recorded_by", "x": 222, "y": 26,
+      "label_size": 12, "value_size": 14, "max_width": 85,
+      "label_align": "center", "value_align": "center"}
   ],
 
   "qr": {
-    "x": 450,
-    "y": 85,
-    "size": 110,
-    "label": "Verify record (QR)",
+    "x": 26.8,
+    "y": 39.7,
+    "size": 33.0,
+    "label": "",
     "label_font": "Helvetica",
-    "label_size": 8
+    "label_size": 8,
+    "level": "H",
+    "version": 7
   },
 
   "disclaimer": {
-    "x": 72,
-    "y": 70,
-    "width": 360,
+    "x": 20,
+    "y": 5,
+    "width": 195,
     "font": "Helvetica",
     "size": 7,
     "leading": 9

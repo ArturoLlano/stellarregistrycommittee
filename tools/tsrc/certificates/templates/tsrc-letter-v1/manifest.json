@@ -2,11 +2,11 @@
   "template_id": "tsrc-letter-v1",
   "display_name": "TSRC Letter Certificate (v1)",
   "page_size": {
-    "name": "LETTER",
-    "width_pt": 612,
-    "height_pt": 792
+    "name": "LETTER_LANDSCAPE",
+    "width_pt": 792,
+    "height_pt": 612
   },
-  "background": "background.jpg",
+  "background": "background.png",
   "layout": "layout.json",
   "disclaimer": "disclaimer.txt",
   "immutable_bundle": true,
