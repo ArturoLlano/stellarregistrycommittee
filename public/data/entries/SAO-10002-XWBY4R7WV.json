@@ -1,0 +1,65 @@
+{
+  "id": "SAO-10002-XWBY4R7WV",
+  "status": "active",
+  "recorded_at_utc": "2026-02-23T20:53:08.986278Z",
+  "designation": {
+    "title": "Registry Entry — SAO 10002",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "10002"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "21 14 53.753",
+      "dec_dms": "+76 37 50.72",
+      "ra_deg": 318.72397083,
+      "dec_deg": 76.63075556
+    },
+    "photometry": {
+      "v_mag": 8.5,
+      "p_mag": 9.6,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "G0",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Cep",
+      "name": "Cepheus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano VP",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 10002, with visual magnitude: 8.5, spectral type: G0, and located at the coordinates: RA: 21h 14m 53.75s, and Dec +76º 37' 50.72'', to be recorded in this registry as:"
+  }
+}
