@@ -4,6 +4,11 @@ from typing import Any, Tuple
 import re
 import requests
 
+
+from typing import Tuple
+import os
+import requests
+
 # ---------- Normalization helpers ----------
 
 def _norm_key(s: str) -> str:
@@ -282,12 +287,74 @@ def fetch_sao_metadata_best_effort(sao: int) -> Tuple[dict[str, Any] | None, str
     return out, None
 
 
+
 def fetch_sao_coordinates_best_effort(sao: int) -> Tuple[dict[str, str] | None, str | None]:
-    meta, err = fetch_sao_metadata_best_effort(sao)
-    if err or not meta:
-        return None, err
-    c = meta["coordinates"]
-    return {"ra_hms": c["ra_hms"], "dec_dms": c["dec_dms"]}, None
+    """
+    Best-effort SAO -> coordinates lookup via VizieR.
+    Tries multiple official mirrors to avoid local/network blocks.
+    Returns: (coords_dict_or_none, warning_or_error_or_none)
+    """
+
+    # Allow override via env var if you ever want to pin a specific mirror
+    # Example: set TSRC_VIZIER_ASU_TSV_BASE=https://vizier.cfa.harvard.edu/viz-bin/asu-tsv
+    override = (os.environ.get("TSRC_VIZIER_ASU_TSV_BASE") or "").strip()
+
+    bases = [override] if override else [
+        "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",   # CDS primary :contentReference[oaicite:2]{index=2}
+        "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",     # legacy Strasbourg host :contentReference[oaicite:3]{index=3}
+        "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",  # Harvard mirror :contentReference[oaicite:4]{index=4}
+        "https://vizier.iucaa.in/viz-bin/asu-tsv",         # IUCAA mirror :contentReference[oaicite:5]{index=5}
+    ]
+
+    params = {
+        "-source": "I/131A",   # SAO Catalog
+        "SAO": str(sao),
+        "-out.all": "",
+        "-out.max": "1",
+    }
+
+    headers = {
+        "User-Agent": "TSRC-Registrar/1.0 (VizieR lookup)",
+        "Accept": "text/tab-separated-values,text/plain,*/*",
+    }
+
+    last_err = None
+
+    for base in bases:
+        try:
+            r = requests.get(base, params=params, headers=headers, timeout=(6, 18))
+            r.raise_for_status()
+            text = r.text
+        except Exception as e:
+            last_err = f"{base} -> {e}"
+            continue
+
+        # Keep only non-comment, non-empty lines
+        lines = [ln for ln in text.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+        if len(lines) < 2:
+            last_err = f"{base} -> no rows"
+            continue
+
+        header = lines[0].split("\t")
+        row = lines[1].split("\t")
+        data = {header[i]: row[i] if i < len(row) else "" for i in range(len(header))}
+
+        # Normalize likely column names
+        ra = (data.get("RAJ2000") or data.get("RA_ICRS") or data.get("RA") or "").strip()
+        dec = (data.get("DEJ2000") or data.get("DE_ICRS") or data.get("DE") or "").strip()
+
+        # If RA/Dec not present, still return full row for debug
+        if not ra or not dec:
+            return data, f"VizieR returned a row but RA/Dec columns were missing (server={base})."
+
+        # Return only what you need (or keep full `data` if you prefer)
+        return {
+            "server": base,
+            "RAJ2000": ra,
+            "DEJ2000": dec,
+        }, None
+
+    return None, f"SAO lookup failed on all mirrors. Last error: {last_err}"
 
 
 def compute_constellation_best_effort(ra_deg: float, dec_deg: float) -> Tuple[dict[str, str] | None, str | None]:
