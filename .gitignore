@@ -5,6 +5,11 @@ public/certificates/
 tools/registrar/*old.py
 tools/registrar/registrar/*old.py
 
+# Microsoft Office temporary/lock files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
 # Windows / Python
 __pycache__/
 *.pyc
