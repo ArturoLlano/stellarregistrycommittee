@@ -4,3 +4,6 @@ _drafts/
 __pycache__/
 *.pyc
 *.log
+
+# Local certificate fonts (do not commit)
+tools/tsrc/certificates/templates/tsrc-letter-v1/fonts/
