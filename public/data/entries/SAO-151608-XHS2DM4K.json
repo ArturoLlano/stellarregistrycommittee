@@ -1,0 +1,59 @@
+{
+  "id": "SAO-151608-XHS2DM4K",
+  "status": "active",
+  "recorded_at_utc": "2026-02-23T00:21:17.602771Z",
+  "designation": {
+    "title": "Registry Entry — SAO 151608",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "151608"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "06 31 29.515",
+      "dec_dms": "-17 29 30.68",
+      "ra_deg": 97.87297917,
+      "dec_deg": -17.49185556
+    },
+    "photometry": {
+      "v_mag": 9.0,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "G5",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "CMa",
+      "name": "Canis Major",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Arturo Llano",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  }
+}
