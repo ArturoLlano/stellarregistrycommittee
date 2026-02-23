@@ -3,7 +3,10 @@ from __future__ import annotations
 import base64
 import json
 import os
+import subprocess
+import sys
 from dataclasses import asdict
+from pathlib import Path
 
 from flask import Flask, render_template, request
 
@@ -13,6 +16,13 @@ from registrar.repo import detect_repo_context
 from registrar.schema import build_entry_payload
 from registrar.util import iso_utc_now, safe_int
 from registrar.vizier import fetch_sao_metadata_best_effort
+
+
+# Ensure repo root is on sys.path so we can import tools.tsrc.* from this app,
+# even when running from tools/registrar/.venv.
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../stellarregistrycommittee
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 def create_app() -> Flask:
@@ -163,7 +173,63 @@ def commit():
 
     target_path.write_text(payload_json + "\n", encoding="utf-8")
 
-    # Git add/commit/push
+    # -----------------------------
+    # NEW: Generate certificate PDF
+    # -----------------------------
+    # This uses your TSRC certificate generator (ReportLab).
+    # Requirements:
+    # - ReportLab must be installed in the registrar venv.
+    # - Entry JSON must be present (we just wrote it).
+    try:
+        from tools.tsrc.certificates.generate import generate_certificate_pdf_for_id
+        from tools.tsrc.config import certificate_public_url
+
+        pdf_path = generate_certificate_pdf_for_id(
+            entry_id=entry_id,
+            force=True,
+            open_after=True,  # auto-open PDF ready to print (best effort)
+        )
+    except Exception as e:
+        # Roll back the JSON write so the commit endpoint stays atomic.
+        try:
+            target_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+        return render_template(
+            "error.html",
+            title="Certificate generation failed",
+            detail=(
+                "The registry entry JSON was not committed because PDF generation failed.\n\n"
+                f"Error: {e}\n\n"
+                "Tip: ensure ReportLab is installed in the registrar virtualenv:\n"
+                "  .\\.venv\\Scripts\\python -m pip install reportlab"
+            ),
+        ), 500
+
+    # Stage PDF as well (so it is included in the SAME commit)
+    # We stage it explicitly, then let existing git_add_commit_push handle the commit/push.
+    try:
+        rel_pdf = Path(pdf_path).resolve().relative_to(Path(ctx.repo_root).resolve())
+        subprocess.run(
+            ["git", "add", "--", rel_pdf.as_posix()],
+            cwd=str(ctx.repo_root),
+            check=True,
+        )
+    except Exception as e:
+        # If staging fails, abort without committing
+        try:
+            target_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+        return render_template(
+            "error.html",
+            title="Git staging failed (certificate)",
+            detail=f"Could not stage certificate PDF for commit.\n\nError: {e}",
+        ), 500
+
+    # Git add/commit/push (existing behavior; should include staged PDF too)
     git_result: GitResult = git_add_commit_push(
         repo_root=ctx.repo_root,
         file_path=target_path,
@@ -174,6 +240,14 @@ def commit():
     registry_url = f"/registry/{entry_id}"
     qr_url = f"/r/{entry_id}"
 
+    # Certificate URLs
+    certificate_site_path = f"/certificates/{entry_id}/certificate.pdf"
+    try:
+        certificate_url = certificate_public_url(entry_id)
+    except Exception:
+        # If config helper isn't present, we still provide the site-relative path.
+        certificate_url = ""
+
     return render_template(
         "result.html",
         entry_id=entry_id,
@@ -183,6 +257,11 @@ def commit():
         qr_url=qr_url,
         git=git_result,
         payload_json=payload_json,
+
+        # NEW fields for your UI:
+        certificate_file_path=str(pdf_path),
+        certificate_site_path=certificate_site_path,
+        certificate_url=certificate_url,
     )
 
 

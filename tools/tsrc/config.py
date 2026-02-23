@@ -11,7 +11,8 @@ import os
 
 # NOTE: Requirement: QR codes MUST encode the absolute URL:
 # https://stellarregistrycommittee.pages.dev/r/<ID>
-PUBLIC_BASE_URL = "https://stellarregistrycommittee.pages.dev"
+# PUBLIC_BASE_URL = "https://stellarregistrycommittee.pages.dev"
+PUBLIC_BASE_URL = os.environ.get("TSRC_PUBLIC_BASE_URL", "https://stellarregistrycommittee.pages.dev").rstrip("/")
 
 QR_SHORT_PREFIX = "/r/"
 REGISTRY_CANONICAL_PREFIX = "/registry/"
@@ -76,3 +77,7 @@ def get_paths() -> RepoPaths:
 def expected_qr_url(entry_id: str) -> str:
     # Must be absolute, QR-safe, stable.
     return f"{PUBLIC_BASE_URL}{QR_SHORT_PREFIX}{entry_id}"
+
+def certificate_public_url(entry_id: str) -> str:
+    # Public static URL once committed & deployed by Cloudflare Pages
+    return f"{PUBLIC_BASE_URL}/certificates/{entry_id}/certificate.pdf"

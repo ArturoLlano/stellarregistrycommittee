@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -9,9 +10,12 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import Canvas
 
+from tools.tsrc.config import get_paths
 from tools.tsrc.certificates.layout import TemplateBundle, get_by_path
 from tools.tsrc.certificates.qr import draw_qr_code
 from tools.tsrc.entries.model import Entry
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 MM_TO_PT = 72.0 / 25.4  # 1 mm = 2.834645669... pt
@@ -26,26 +30,57 @@ class RenderContext:
     units: str  # "pt" or "mm"
 
 
+def _register_template_fonts(template: TemplateBundle) -> None:
+    fonts = template.manifest.get("fonts", {})
+    if not isinstance(fonts, dict):
+        return
+
+    for font_name, rel_path in fonts.items():
+        if not font_name or not rel_path:
+            continue
+
+        # Already registered?
+        try:
+            pdfmetrics.getFont(font_name)
+            continue
+        except Exception:
+            pass
+
+        font_path = (template.root_dir / str(rel_path)).resolve()
+        pdfmetrics.registerFont(TTFont(str(font_name), str(font_path)))
+
 def render_certificate_pdf(
     entry: Entry,
     template: TemplateBundle,
     out_pdf_path: Path,
 ) -> None:
     """
-    Single-page certificate.
+    Render a single-page certificate.
 
-    - Page size can be defined in pt OR mm (layout.json controls units).
-    - All geometric coordinates can be in mm when units="mm".
-    - Font sizes remain in points (pt), because fonts are naturally specified in pt.
+    Render flow (order matters):
+      1) background
+      2) layout blocks (in order, including the two legend paragraphs if present)
+      3) QR
+      4) disclaimer
+
+    This design lets layout.json control placement/order of "before name" / "after name".
     """
+    _register_template_fonts(template)
     units = _get_units(template)
     page_w_pt, page_h_pt = _get_template_pagesize_pt(template, units)
 
     out_pdf_path.parent.mkdir(parents=True, exist_ok=True)
     c = Canvas(str(out_pdf_path), pagesize=(page_w_pt, page_h_pt))
 
+    # Base dictionary derived from Entry model
+    entry_dict = entry.to_dict()
+
+    # Merge additional certificate fields from the original JSON file if present.
+    # This is critical for nested fields like certificate.legend_en (not represented in the Entry model).
+    entry_dict = _merge_raw_entry_json_certificate_fields(entry_id=entry.id, entry_dict=entry_dict)
+
     ctx = RenderContext(
-        entry_dict=entry.to_dict(),
+        entry_dict=entry_dict,
         template=template,
         page_w_pt=page_w_pt,
         page_h_pt=page_h_pt,
@@ -60,6 +95,10 @@ def render_certificate_pdf(
     c.showPage()
     c.save()
 
+
+# -----------------------------
+# Core helpers
+# -----------------------------
 
 def _get_units(template: TemplateBundle) -> str:
     u = str(template.layout.get("units", "pt")).strip().lower()
@@ -96,6 +135,155 @@ def _get_template_pagesize_pt(template: TemplateBundle, units: str) -> Tuple[flo
     w, h = letter  # fallback
     return float(w), float(h)
 
+
+def _merge_raw_entry_json_certificate_fields(entry_id: str, entry_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge nested certificate.* fields from the original entry JSON file into entry_dict["certificate"].
+
+    Why:
+    - Entry model currently only includes template_id and qr_url, so fields like:
+        certificate.legend_en, certificate.lang
+      would otherwise be lost for rendering.
+
+    Graceful behavior:
+    - If file missing or unreadable: return entry_dict unchanged.
+    - If no certificate block in raw: unchanged.
+    """
+    try:
+        paths = get_paths()
+        p = (paths.entries_dir / f"{entry_id}.json").resolve()
+        if not p.exists():
+            return entry_dict
+
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        raw_cert = raw.get("certificate")
+        if not isinstance(raw_cert, dict):
+            return entry_dict
+
+        out = dict(entry_dict)
+        out_cert = dict(out.get("certificate") or {})
+        for k, v in raw_cert.items():
+            if k not in out_cert:
+                out_cert[k] = v
+        out["certificate"] = out_cert
+        return out
+    except Exception:
+        return entry_dict
+
+
+def _font_pick(name: str, default_font: str, default_bold: str, default_mono: str) -> str:
+    if name == "bold":
+        return default_bold
+    if name == "mono":
+        return default_mono
+    # Allow explicit font names too
+    return name or default_font
+
+
+def _draw_aligned_string(c: Canvas, text: str, x: float, y: float, align: str) -> None:
+    a = (align or "left").strip().lower()
+    if a == "center":
+        c.drawCentredString(x, y, text)
+    elif a == "right":
+        c.drawRightString(x, y, text)
+    else:
+        c.drawString(x, y, text)
+
+
+def _wrap_lines(text: str, *, font: str, size_pt: float, max_width_pt: float) -> List[str]:
+    """
+    Greedy word wrap to a max width using ReportLab stringWidth.
+    """
+    if not text:
+        return [""]
+
+    if max_width_pt <= 0:
+        return [text]
+
+    words = text.split()
+    if not words:
+        return [""]
+
+    lines: List[str] = []
+    cur: List[str] = []
+
+    for w in words:
+        trial = (" ".join(cur + [w])).strip()
+        if stringWidth(trial, font, size_pt) <= max_width_pt or not cur:
+            cur.append(w)
+        else:
+            lines.append(" ".join(cur))
+            cur = [w]
+
+    if cur:
+        lines.append(" ".join(cur))
+
+    return lines
+
+
+def _ellipsize_line(text: str, *, font: str, size_pt: float, max_width_pt: float) -> str:
+    """
+    Truncate a single line with ellipsis to fit width.
+    """
+    if max_width_pt <= 0:
+        return text
+
+    ell = "…"
+    if stringWidth(text, font, size_pt) <= max_width_pt:
+        return text
+
+    t = text
+    while t and stringWidth(t + ell, font, size_pt) > max_width_pt:
+        t = t[:-1]
+
+    return (t + ell) if t else ell
+
+
+def _layout_paragraph(
+    text: str,
+    *,
+    font: str,
+    size_pt_start: float,
+    leading_pt: float,
+    max_width_pt: float,
+    max_lines: int,
+    shrink_on_overflow: bool,
+    shrink_step_pt: float,
+    min_size_pt: float,
+) -> Tuple[float, List[str], float]:
+    """
+    Wrap paragraph to max_width/max_lines. If overflow:
+      - optionally shrink font in steps until it fits (down to min_size_pt)
+      - if still overflow, ellipsize the last line
+
+    Returns: (final_size_pt, lines_to_draw, final_leading_pt)
+    """
+    size_pt = size_pt_start
+
+    def lines_for(sz: float) -> List[str]:
+        return _wrap_lines(text, font=font, size_pt=sz, max_width_pt=max_width_pt)
+
+    lines = lines_for(size_pt)
+
+    if shrink_on_overflow and max_lines > 0 and max_width_pt > 0:
+        while len(lines) > max_lines and (size_pt - shrink_step_pt) >= min_size_pt:
+            size_pt -= shrink_step_pt
+            lines = lines_for(size_pt)
+
+    if max_lines > 0 and len(lines) > max_lines:
+        lines = lines[:max_lines]
+        lines[-1] = _ellipsize_line(lines[-1], font=font, size_pt=size_pt, max_width_pt=max_width_pt)
+
+    # If caller didn't explicitly set leading, keep it proportional when shrinking.
+    if leading_pt <= 0:
+        leading_pt = size_pt + 2
+
+    return size_pt, lines, leading_pt
+
+
+# -----------------------------
+# Drawing primitives
+# -----------------------------
 
 def _draw_background(c: Canvas, ctx: RenderContext) -> None:
     """
@@ -143,14 +331,8 @@ def _draw_blocks(c: Canvas, ctx: RenderContext) -> None:
             _draw_field_block(c, ctx, b, default_font, default_bold, default_mono)
         elif btype == "kv":
             _draw_kv_block(c, ctx, b, default_font, default_bold, default_mono)
-
-
-def _font_pick(name: str, default_font: str, default_bold: str, default_mono: str) -> str:
-    if name == "bold":
-        return default_bold
-    if name == "mono":
-        return default_mono
-    return name or default_font
+        elif btype in ("paragraph", "para"):
+            _draw_paragraph_block(c, ctx, b, default_font, default_bold, default_mono)
 
 
 def _draw_text_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_font: str, default_bold: str, default_mono: str) -> None:
@@ -163,14 +345,7 @@ def _draw_text_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_f
 
     c.saveState()
     c.setFont(font, size_pt)
-
-    if align == "center":
-        c.drawCentredString(x, y, text)
-    elif align == "right":
-        c.drawRightString(x, y, text)
-    else:
-        c.drawString(x, y, text)
-
+    _draw_aligned_string(c, text, x, y, align)
     c.restoreState()
 
 
@@ -182,7 +357,7 @@ def _draw_field_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_
     value = get_by_path(ctx.entry_dict, key)
     prefix = str(b.get("prefix", ""))
     suffix = str(b.get("suffix", ""))
-    text = f"{prefix}{value}{suffix}"
+    text = f"{prefix}{value}{suffix}".strip()
 
     x = _to_pt(b.get("x", 25), ctx.units)
     y = _to_pt(b.get("y", 150), ctx.units)
@@ -192,43 +367,37 @@ def _draw_field_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_
     max_width_pt = _to_pt(max_width, ctx.units) if float(max_width or 0) else 0.0
     font = _font_pick(str(b.get("font", "")), default_font, default_bold, default_mono)
 
+    if not text:
+        return
+
     c.saveState()
     c.setFont(font, size_pt)
 
+    # Optional shrink-to-fit for single-line field
     if max_width_pt and stringWidth(text, font, size_pt) > max_width_pt:
         while size_pt > 6 and stringWidth(text, font, size_pt) > max_width_pt:
             size_pt -= 0.25
             c.setFont(font, size_pt)
 
-    if align == "center":
-        c.drawCentredString(x, y, text)
-    elif align == "right":
-        c.drawRightString(x, y, text)
-    else:
-        c.drawString(x, y, text)
-
+    _draw_aligned_string(c, text, x, y, align)
     c.restoreState()
 
 
-def _draw_kv_block(
-    c: Canvas,
-    ctx: RenderContext,
-    b: Dict[str, Any],
-    default_font: str,
-    default_bold: str,
-    default_mono: str,
-) -> None:
+def _draw_kv_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_font: str, default_bold: str, default_mono: str) -> None:
+    """
+    Key/value block:
+      - optional label line (small)
+      - value line (single-line with optional shrink-to-fit)
+    """
     label = str(b.get("label", "")).strip()
     key = str(b.get("key", "")).strip()
 
-    # Geometric coords are in ctx.units (mm or pt)
     x = _to_pt(b.get("x", 25), ctx.units)
     y = _to_pt(b.get("y", 150), ctx.units)
 
-    # Typography sizes are in points (pt)
-    label_size_pt = float(b.get("label_size", 8))
-    value_size_pt0 = float(b.get("value_size", 11))
-    gap_pt = float(b.get("gap", 2))  # pt
+    label_size_pt = float(b.get("label_size", 8))   # pt
+    value_size_pt = float(b.get("value_size", 11))  # pt
+    gap_pt = float(b.get("gap", 2))                 # pt
 
     max_width = b.get("max_width", 0)
     max_width_pt = _to_pt(max_width, ctx.units) if float(max_width or 0) else 0.0
@@ -237,147 +406,108 @@ def _draw_kv_block(
     value_font = _font_pick(str(b.get("value_font", "")), default_font, default_bold, default_mono)
 
     value = get_by_path(ctx.entry_dict, key) if key else ""
-    value = str(value)
+    value = str(value).strip()
+    # Optional quoting for motto (or any kv value)
+    if value:
+        if bool(b.get("quote", False)):
+            # Avoid double quoting if it already looks quoted
+            if not (value.startswith(("“", '"', "'")) and value.endswith(("”", '"', "'"))):
+                value = f"“{value}”"
     fmt = str(b.get("format", "")).strip()
     if fmt:
         value = _format_value(value, fmt)
+    if not value and not label:
+        return
 
-    # Alignment:
+    # Alignment (optional; backward-compatible defaults)
     label_align = str(b.get("label_align", b.get("align", "left"))).strip().lower()
     value_align = str(b.get("value_align", b.get("align", "left"))).strip().lower()
 
-    # Wrap / overflow behavior
-    wrap = bool(b.get("wrap", False))
-    max_lines = int(b.get("max_lines", 1)) if wrap else 1
-
-    # leading in pt (typographic)
-    value_leading_pt = float(b.get("value_leading", value_size_pt0 + 2))
-
-    # Combined strategy controls
-    shrink_on_overflow = bool(b.get("shrink_on_overflow", False))
-    shrink_step_pt = float(b.get("shrink_step_pt", 1))
-    min_value_size_pt = float(b.get("min_value_size_pt", 6))
-
-    def _draw_aligned(text: str, xx: float, yy: float, align: str) -> None:
-        if align == "center":
-            c.drawCentredString(xx, yy, text)
-        elif align == "right":
-            c.drawRightString(xx, yy, text)
-        else:
-            c.drawString(xx, yy, text)
-
-    def _wrap_lines(text: str, font: str, size_pt: float, width_pt: float) -> list[str]:
-        """
-        Greedy word-wrap to width_pt. Falls back to char splitting for long tokens.
-        """
-        if width_pt <= 0:
-            return [text]
-
-        words = text.split()
-        if not words:
-            return [""]
-
-        lines: list[str] = []
-        cur: list[str] = []
-
-        def fits(s: str) -> bool:
-            return stringWidth(s, font, size_pt) <= width_pt
-
-        for w in words:
-            trial = (" ".join(cur + [w])).strip()
-            if not cur:
-                # Single word too long: split into chunks by char
-                if not fits(trial):
-                    chunk = ""
-                    for ch in w:
-                        t2 = chunk + ch
-                        if fits(t2) or chunk == "":
-                            chunk = t2
-                        else:
-                            lines.append(chunk)
-                            chunk = ch
-                    if chunk:
-                        cur = [chunk]
-                    else:
-                        cur = []
-                else:
-                    cur = [w]
-            else:
-                if fits(trial):
-                    cur.append(w)
-                else:
-                    lines.append(" ".join(cur))
-                    cur = [w]
-
-        if cur:
-            lines.append(" ".join(cur))
-
-        return lines
-
-    def _ellipsize(text: str, font: str, size_pt: float, width_pt: float) -> str:
-        """
-        Truncate with ellipsis so it fits width_pt.
-        """
-        if width_pt <= 0:
-            return text
-        ell = "…"
-        if stringWidth(text, font, size_pt) <= width_pt:
-            return text
-        t = text
-        while t and stringWidth(t + ell, font, size_pt) > width_pt:
-            t = t[:-1]
-        return (t + ell) if t else ell
+    # Optional: hide label without deleting it from layout
+    show_label = bool(b.get("show_label", True))
 
     c.saveState()
 
-    # Label line
-    if label:
+    if show_label and label:
         c.setFont(label_font, label_size_pt)
-        _draw_aligned(label, x, y, label_align)
+        _draw_aligned_string(c, label, x, y, label_align)
         y -= (label_size_pt + gap_pt)
 
-    # Value rendering
-    if wrap:
-        # Combined strategy:
-        # 1) wrap to max_lines
-        # 2) if overflow, shrink by 1pt steps until it fits or min reached
-        # 3) if still overflow, ellipsize last line
-        size_pt = value_size_pt0
+    c.setFont(value_font, value_size_pt)
 
-        def layout_lines(sz: float) -> list[str]:
-            return _wrap_lines(value, value_font, sz, max_width_pt)
+    # Single-line shrink-to-fit for value
+    if value and max_width_pt and stringWidth(value, value_font, value_size_pt) > max_width_pt:
+        while value_size_pt > 6 and stringWidth(value, value_font, value_size_pt) > max_width_pt:
+            value_size_pt -= 0.25
+            c.setFont(value_font, value_size_pt)
 
-        lines = layout_lines(size_pt)
+    if value:
+        _draw_aligned_string(c, value, x, y, value_align)
 
-        if shrink_on_overflow and max_width_pt > 0:
-            while len(lines) > max_lines and size_pt - shrink_step_pt >= min_value_size_pt:
-                size_pt -= shrink_step_pt
-                lines = layout_lines(size_pt)
+    c.restoreState()
 
-        # Now enforce max_lines; if still too many, ellipsize last line.
-        if len(lines) > max_lines:
-            lines = lines[:max_lines]
-            lines[-1] = _ellipsize(lines[-1], value_font, size_pt, max_width_pt)
 
-        c.setFont(value_font, size_pt)
+def _draw_paragraph_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_font: str, default_bold: str, default_mono: str) -> None:
+    """
+    Wrapped paragraph block for legends (and other body text).
 
-        # If caller didn’t specify leading, keep it proportional when size shrinks
-        leading_pt = float(b.get("value_leading", size_pt + 2))
+    Supports:
+      - source: "entry" (default) or "manifest"
+      - require: dotted path in entry_dict; if missing/empty => skip
+      - max_lines + shrink_on_overflow + ellipsis fallback
+    """
+    source = str(b.get("source", "entry")).strip().lower()
+    key = str(b.get("key", "")).strip()
+    if not key:
+        return
 
-        for i, ln in enumerate(lines):
-            _draw_aligned(ln, x, y - i * leading_pt, value_align)
+    require = str(b.get("require", "")).strip()
+    if require:
+        if not str(get_by_path(ctx.entry_dict, require)).strip():
+            return
 
+    if source == "manifest":
+        text = str(get_by_path(ctx.template.manifest, key)).strip()
     else:
-        # Single-line behavior (existing): shrink-to-fit if max_width is set
-        size_pt = value_size_pt0
-        c.setFont(value_font, size_pt)
+        text = str(get_by_path(ctx.entry_dict, key)).strip()
 
-        if max_width_pt and stringWidth(value, value_font, size_pt) > max_width_pt:
-            while size_pt > min_value_size_pt and stringWidth(value, value_font, size_pt) > max_width_pt:
-                size_pt -= 0.25
-                c.setFont(value_font, size_pt)
+    # If missing, omit gracefully.
+    if not text:
+        return
 
-        _draw_aligned(value, x, y, value_align)
+    x = _to_pt(b.get("x", 25), ctx.units)
+    y = _to_pt(b.get("y", 150), ctx.units)
+    width_pt = _to_pt(b.get("width", 170), ctx.units)
+
+    font = _font_pick(str(b.get("font", "")), default_font, default_bold, default_mono)
+    size_pt = float(b.get("size", 10))
+    leading_pt = float(b.get("leading", size_pt + 2))
+    align = str(b.get("align", "left")).strip().lower()
+
+    max_lines = int(b.get("max_lines", 0))  # 0 => unlimited
+    shrink_on_overflow = bool(b.get("shrink_on_overflow", False))
+    shrink_step_pt = float(b.get("shrink_step_pt", 1.0))
+    min_size_pt = float(b.get("min_size_pt", 7.0))
+
+    final_size_pt, lines, final_leading = _layout_paragraph(
+        text,
+        font=font,
+        size_pt_start=size_pt,
+        leading_pt=leading_pt,
+        max_width_pt=width_pt,
+        max_lines=max_lines,
+        shrink_on_overflow=shrink_on_overflow,
+        shrink_step_pt=shrink_step_pt,
+        min_size_pt=min_size_pt,
+    )
+
+    c.saveState()
+    c.setFont(font, final_size_pt)
+
+    ty = y
+    for ln in lines:
+        _draw_aligned_string(c, ln, x, ty, align)
+        ty -= final_leading
 
     c.restoreState()
 
@@ -430,6 +560,7 @@ def _draw_disclaimer(c: Canvas, ctx: RenderContext) -> None:
 
 
 def _wrap_text_to_width(text: str, *, font: str, size: float, max_width: float) -> List[str]:
+    # Kept for disclaimer (backward-compatible simple wrapping).
     words = text.split()
     if not words:
         return [""]

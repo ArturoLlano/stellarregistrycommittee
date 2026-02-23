@@ -13,5 +13,11 @@
   "strings": {
     "post_name_statement_en": "Be it further known that The Stellar Registry Committee will record and preserve the name assigned to this star."
   },
-  "notes": "Template bundles are immutable. Any visual change must create a new folder, e.g. tsrc-letter-v2."
+  "notes": "Template bundles are immutable. Any visual change must create a new folder, e.g. tsrc-letter-v2.",
+  "fonts": {
+  "Georgia-Regular": "fonts/georgia.ttf",
+  "Georgia-Bold": "fonts/georgiab.ttf",
+  "Georgia-Italic": "fonts/georgiai.ttf",
+  "Georgia-BoldItalic": "fonts/georgiaz.ttf"
+  }
 }

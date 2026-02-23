@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from tools.tsrc.config import get_paths
+from tools.tsrc.config import get_paths, certificate_public_url
 from tools.tsrc.entries.io import read_entry_from_public
 from tools.tsrc.entries.validate import validate_entry_or_raise
 from tools.tsrc.certificates.generate import (
@@ -21,12 +21,33 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 
 def _cmd_generate(args: argparse.Namespace) -> int:
+    from tools.tsrc.git_ops import git_add_commit_push
+
     pdf_path = generate_certificate_pdf_for_id(
         entry_id=args.id,
         force=args.force,
         open_after=not args.no_open,
     )
+
+    # Always print local path (useful for logs/UI)
     print(str(pdf_path))
+
+    if args.publish:
+        paths = get_paths()
+
+        commit_message = f"Add certificate {args.id}"
+        res = git_add_commit_push(
+            repo_root=paths.repo_root,
+            paths=[pdf_path],
+            commit_message=commit_message,
+            push=(not args.no_push),
+        )
+        print(res.message)
+
+        # Shareable link (public, once deployed by Cloudflare Pages)
+        print("Share URL:", certificate_public_url(args.id))
+        print("Site path:", f"/certificates/{args.id}/certificate.pdf")
+
     return 0
 
 
@@ -73,6 +94,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_gen.add_argument("id", help="Entry ID, e.g. SAO-12345-AB12")
     p_gen.add_argument("--force", action="store_true", help="Regenerate even if PDF exists.")
     p_gen.add_argument("--no-open", action="store_true", help="Do not auto-open the PDF.")
+
+    # NEW:
+    p_gen.add_argument(
+        "--publish",
+        action="store_true",
+        help="Git add/commit/push the generated PDF to publish it online (Cloudflare Pages).",
+    )
+    p_gen.add_argument(
+        "--no-push",
+        action="store_true",
+        help="With --publish: commit but do not push.",
+    )
+
     p_gen.set_defaults(func=_cmd_generate)
 
     p_all = sub.add_parser("generate-all", help="Generate certificates for entries in /public/data/entries.")

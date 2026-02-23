@@ -3,20 +3,39 @@
   "page": { "width": 279.4, "height": 215.9 },
 
   "fonts": {
-    "body": "Helvetica-Oblique",
-    "body_bold": "Helvetica-BoldOblique",
+    "body": "Georgia-Italic",
+    "body_bold": "Georgia-BoldItalic",
     "mono": "Courier-Oblique"
   },
 
   "blocks": [
     {
+      "type": "paragraph",
+      "source": "entry",
+      "key": "certificate.legend_en",
+      "require": "certificate.lang",
+      "x": 139.7,
+      "y": 125,
+      "width": 200,
+      "font": "",
+      "size": 14,
+      "leading": 18,
+      "max_lines": 4,
+      "align": "center",
+      "shrink_on_overflow": true,
+      "shrink_step_pt": 1,
+      "min_size_pt": 7
+    },
+
+    {
       "type": "kv",
       "label": "",
       "key": "inscription.name",
       "x": 139.7,
-      "y": 122,
+      "y": 100,
       "label_size": 8,
-      "value_size": 14,
+      "value_size": 16,
+      "value_font": "Georgia-BoldItalic",
       "max_width": 170,
       "label_align": "center",
       "value_align": "center"
@@ -24,16 +43,17 @@
     {
       "type": "kv",
       "label": "",
+      "quote": true,
       "key": "inscription.motto",
       "x": 139.7,
-      "y": 110,
+      "y": 93,
       "label_size": 8,
-      "value_size": 11,
+      "value_size": 13,
       "max_width": 170,
 
       "wrap": true,
       "max_lines": 3,
-      "value_leading": 13,
+      "value_leading": 14,
 
       "shrink_on_overflow": true,
       "shrink_step_pt": 1,
@@ -42,21 +62,32 @@
       "label_align": "center",
       "value_align": "center"
     },
+    {
+      "type": "paragraph",
+      "source": "manifest",
+      "key": "strings.post_name_statement_en",
+      "require": "certificate.lang",
+      "x": 80,
+      "y": 65,
+      "width": 150,
+      "font": "",
+      "size": 14,
+      "leading": 18,
+      "max_lines": 2,
+      "align": "left",
+      "sh\"align\": \"left\"rink_on_overflow": false
+    },
 
-    { "type": "kv", "label": "SAO CATALOG REFERENCE", "key": "sao", "x": 70, "y": 92, "label_size": 8, "value_size": 11, "max_width": 90 },
-    { "type": "kv", "label": "RIGHT ASCENSION (J2000)", "key": "coordinates.ra", "x": 70, "y": 80, "label_size": 8, "value_size": 11, "max_width": 90 },
-    { "type": "kv", "label": "DECLINATION (J2000)", "key": "coordinates.dec", "x": 70, "y": 68, "label_size": 8, "value_size": 11, "max_width": 90 },
 
+   
 
-    { "type": "kv", "label": "SPONSOR", "key": "sponsor", "x": 175, "y": 80, "label_size": 8, "value_size": 11, "max_width": 85 },
-
-    { "type": "kv", "label": "REGISTRY ID", "key": "id", "x": 175, "y": 68, "label_size": 8, "value_size": 10, "value_font": "mono", "max_width": 85 },
+    { "type": "kv", "label": "REGISTRY ID:", "key": "id", "x": 80, "y": 45, "label_size": 10, "value_size": 10, "value_font": "mono", "max_width": 85 },
 
     { "type": "kv", "label": "Recorded this day:", "key": "recorded_at", "x": 43.45, "y": 26,
       "label_size": 12, "value_size": 14, "max_width": 85, "format": "date_long_en",
       "label_align": "center", "value_align": "center" },
 
-    { "type": "kv", "label": "Recorded by:", "key": "recorded_by", "x": 222, "y": 26,
+    { "type": "kv", "label": "Recorded by:", "key": "sponsor", "x": 222, "y": 26,
       "label_size": 12, "value_size": 14, "max_width": 85,
       "label_align": "center", "value_align": "center"}
   ],
@@ -73,11 +104,11 @@
   },
 
   "disclaimer": {
-    "x": 20,
-    "y": 5,
-    "width": 195,
+    "x": 30,
+    "y": 15,
+    "width": 250,
     "font": "Helvetica",
-    "size": 7,
+    "size": 6,
     "leading": 9
   }
 }

@@ -144,7 +144,7 @@ def _build_legend_en(*, sao: int, obj: dict) -> str | None:
     if sptype:
         chunks.append(f"spectral type: {sptype}")
 
-    chunks.append(f"located at the coordinates: RA: {ra}, and Dec {dec}, to be recorded in this registry as:")
+    chunks.append(f"and located at the coordinates: RA: {ra}, and Dec {dec}, to be recorded in this registry as:")
 
     # Join with commas exactly in the style you wrote
     return ", ".join(chunks[:-1]) + ", " + chunks[-1]
