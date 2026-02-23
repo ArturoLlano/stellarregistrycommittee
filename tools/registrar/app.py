@@ -123,6 +123,51 @@ def preview():
     )
 
 
+def _git_add_paths(repo_root: Path, rel_paths_posix: list[str]) -> None:
+    """
+    Stage files. If add fails (commonly because of .gitignore), retry with -f.
+    Raises RuntimeError with captured stderr/stdout on failure.
+    """
+    r = subprocess.run(
+        ["git", "add", "--", *rel_paths_posix],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if r.returncode == 0:
+        return
+
+    msg1 = (r.stderr or r.stdout or "").strip()
+
+    # Retry forced add (useful if path is ignored)
+    r2 = subprocess.run(
+        ["git", "add", "-f", "--", *rel_paths_posix],
+        cwd=str(repo_root),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if r2.returncode == 0:
+        return
+
+    msg2 = (r2.stderr or r2.stdout or "").strip()
+    raise RuntimeError(f"git add failed.\n\nFirst attempt:\n{msg1}\n\nRetry (-f):\n{msg2}")
+
+
+def _open_file_best_effort(path: Path) -> None:
+    try:
+        if sys.platform.startswith("win"):
+            os.startfile(str(path))  # type: ignore[attr-defined]
+            return
+        if sys.platform == "darwin":
+            subprocess.run(["open", str(path)], check=False)
+            return
+        subprocess.run(["xdg-open", str(path)], check=False)
+    except Exception:
+        return
+
+
 @app.post("/commit")
 def commit():
     ctx = detect_repo_context()
@@ -161,7 +206,7 @@ def commit():
         ), 409
 
     # Write JSON file
-    target_path = ctx.entries_dir / f"{entry_id}.json"
+    target_path = (ctx.entries_dir / f"{entry_id}.json").resolve()
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
     if target_path.exists():
@@ -174,23 +219,25 @@ def commit():
     target_path.write_text(payload_json + "\n", encoding="utf-8")
 
     # -----------------------------
-    # NEW: Generate certificate PDF
+    # NEW: Generate certificate PDF (do not open yet)
     # -----------------------------
-    # This uses your TSRC certificate generator (ReportLab).
-    # Requirements:
-    # - ReportLab must be installed in the registrar venv.
-    # - Entry JSON must be present (we just wrote it).
     try:
         from tools.tsrc.certificates.generate import generate_certificate_pdf_for_id
         from tools.tsrc.config import certificate_public_url
 
-        pdf_path = generate_certificate_pdf_for_id(
-            entry_id=entry_id,
-            force=True,
-            open_after=True,  # auto-open PDF ready to print (best effort)
-        )
+        pdf_path = Path(
+            generate_certificate_pdf_for_id(
+                entry_id=entry_id,
+                force=True,
+                open_after=False,  # open AFTER successful commit/push
+            )
+        ).resolve()
+
+        if not pdf_path.exists():
+            raise RuntimeError(f"Certificate PDF was not created: {pdf_path}")
+
     except Exception as e:
-        # Roll back the JSON write so the commit endpoint stays atomic.
+        # Roll back JSON write so /commit stays atomic
         try:
             target_path.unlink(missing_ok=True)
         except Exception:
@@ -207,34 +254,46 @@ def commit():
             ),
         ), 500
 
-    # Stage PDF as well (so it is included in the SAME commit)
-    # We stage it explicitly, then let existing git_add_commit_push handle the commit/push.
+    # -----------------------------
+    # Stage JSON + PDF together
+    # -----------------------------
     try:
-        rel_pdf = Path(pdf_path).resolve().relative_to(Path(ctx.repo_root).resolve())
-        subprocess.run(
-            ["git", "add", "--", rel_pdf.as_posix()],
-            cwd=str(ctx.repo_root),
-            check=True,
-        )
+        repo_root = Path(ctx.repo_root).resolve()
+        rel_json = target_path.relative_to(repo_root).as_posix()
+        rel_pdf = pdf_path.relative_to(repo_root).as_posix()
+
+        _git_add_paths(repo_root, [rel_json, rel_pdf])
+
     except Exception as e:
-        # If staging fails, abort without committing
+        # Roll back files to keep commit endpoint clean
         try:
             target_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        try:
+            pdf_path.unlink(missing_ok=True)
         except Exception:
             pass
 
         return render_template(
             "error.html",
             title="Git staging failed (certificate)",
-            detail=f"Could not stage certificate PDF for commit.\n\nError: {e}",
+            detail=str(e),
         ), 500
 
-    # Git add/commit/push (existing behavior; should include staged PDF too)
+    # -----------------------------
+    # Git add/commit/push (existing behavior)
+    # - git_add_commit_push will add/commit/push the entry file,
+    #   and since PDF is already staged, it will be included in the same commit.
+    # -----------------------------
     git_result: GitResult = git_add_commit_push(
         repo_root=ctx.repo_root,
         file_path=target_path,
         commit_message=f"Add registry entry {entry_id}",
     )
+
+    # Open PDF AFTER successful commit/push (best effort)
+    _open_file_best_effort(pdf_path)
 
     # Registry URLs (relative, QR-safe architecture)
     registry_url = f"/registry/{entry_id}"
@@ -245,7 +304,6 @@ def commit():
     try:
         certificate_url = certificate_public_url(entry_id)
     except Exception:
-        # If config helper isn't present, we still provide the site-relative path.
         certificate_url = ""
 
     return render_template(
