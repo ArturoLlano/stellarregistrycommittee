@@ -19,3 +19,6 @@
 /sky/*
   X-Frame-Options: SAMEORIGIN
   Content-Security-Policy: frame-ancestors 'self'
+
+/certificates/*
+  X-Robots-Tag: noindex, nofollow, nosnippet
