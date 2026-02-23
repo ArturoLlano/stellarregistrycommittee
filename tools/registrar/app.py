@@ -170,6 +170,10 @@ def _open_file_best_effort(path: Path) -> None:
 
 @app.post("/commit")
 def commit():
+    import shutil
+    import subprocess
+    from pathlib import Path
+
     ctx = detect_repo_context()
     if not ctx.ok:
         return render_template("error.html", title="Repository not detected", detail=ctx.error), 400
@@ -205,7 +209,11 @@ def commit():
             extra={"duplicates": [asdict(d) for d in dups]},
         ), 409
 
+    repo_root = Path(ctx.repo_root).resolve()
+
+    # -----------------------------
     # Write JSON file
+    # -----------------------------
     target_path = (ctx.entries_dir / f"{entry_id}.json").resolve()
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -219,27 +227,46 @@ def commit():
     target_path.write_text(payload_json + "\n", encoding="utf-8")
 
     # -----------------------------
-    # NEW: Generate certificate PDF (do not open yet)
+    # Generate certificate PDF (somewhere in tools/..., then COPY to public/)
     # -----------------------------
+    generated_pdf_path = None
+    public_pdf_path = None
+
     try:
         from tools.tsrc.certificates.generate import generate_certificate_pdf_for_id
-        from tools.tsrc.config import certificate_public_url
 
-        pdf_path = Path(
+        generated_pdf_path = Path(
             generate_certificate_pdf_for_id(
                 entry_id=entry_id,
                 force=True,
-                open_after=False,  # open AFTER successful commit/push
+                open_after=False,  # open AFTER successful push
             )
         ).resolve()
 
-        if not pdf_path.exists():
-            raise RuntimeError(f"Certificate PDF was not created: {pdf_path}")
+        if not generated_pdf_path.exists():
+            raise RuntimeError(f"Certificate PDF was not created: {generated_pdf_path}")
+
+        # IMPORTANT: publishable location (Cloudflare Pages serves /public)
+        cert_dir = (repo_root / "public" / "certificates").resolve()
+        cert_dir.mkdir(parents=True, exist_ok=True)
+
+        public_pdf_path = (cert_dir / f"{entry_id}.pdf").resolve()
+        shutil.copy2(generated_pdf_path, public_pdf_path)
+
+        if not public_pdf_path.exists():
+            raise RuntimeError(f"Failed to copy certificate into public/: {public_pdf_path}")
 
     except Exception as e:
         # Roll back JSON write so /commit stays atomic
         try:
             target_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+        # Best effort cleanup
+        try:
+            if public_pdf_path:
+                public_pdf_path.unlink(missing_ok=True)
         except Exception:
             pass
 
@@ -255,56 +282,82 @@ def commit():
         ), 500
 
     # -----------------------------
-    # Stage JSON + PDF together
+    # Git add/commit/push JSON + public PDF (same commit)
     # -----------------------------
-    try:
-        repo_root = Path(ctx.repo_root).resolve()
-        rel_json = target_path.relative_to(repo_root).as_posix()
-        rel_pdf = pdf_path.relative_to(repo_root).as_posix()
+    rel_json = target_path.relative_to(repo_root).as_posix()
+    rel_pdf = public_pdf_path.relative_to(repo_root).as_posix()
 
-        _git_add_paths(repo_root, [rel_json, rel_pdf])
+    git_steps = [
+        f'git add -- "{rel_json}" "{rel_pdf}"',
+        f'git commit -m "Add registry entry {entry_id}" -- "{rel_json}" "{rel_pdf}"',
+        "git push",
+    ]
+
+    def _run_git(args: list[str]) -> tuple[int, str, str]:
+        p = subprocess.run(
+            ["git", *args],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+        )
+        return p.returncode, (p.stdout or ""), (p.stderr or "")
+
+    try:
+        rc1, out1, err1 = _run_git(["add", "--", rel_json, rel_pdf])
+        if rc1 != 0:
+            raise RuntimeError(f"git add failed:\n{err1 or out1}")
+
+        rc2, out2, err2 = _run_git(["commit", "-m", f"Add registry entry {entry_id}", "--", rel_json, rel_pdf])
+        if rc2 != 0:
+            # Common case: "nothing to commit" (shouldn't happen here, but handle anyway)
+            raise RuntimeError(f"git commit failed:\n{err2 or out2}")
+
+        rc3, out3, err3 = _run_git(["push"])
+        if rc3 != 0:
+            raise RuntimeError(f"git push failed:\n{err3 or out3}")
+
+        git_result = {
+            "ok": True,
+            "steps": git_steps,
+            "stdout": out1 + out2 + out3,
+            "stderr": err1 + err2 + err3,
+        }
 
     except Exception as e:
-        # Roll back files to keep commit endpoint clean
+        # Roll back files to keep commit endpoint clean (best effort)
         try:
             target_path.unlink(missing_ok=True)
         except Exception:
             pass
         try:
-            pdf_path.unlink(missing_ok=True)
+            if public_pdf_path:
+                public_pdf_path.unlink(missing_ok=True)
         except Exception:
             pass
 
+        git_result = {
+            "ok": False,
+            "steps": git_steps,
+            "stdout": "",
+            "stderr": str(e),
+        }
+
         return render_template(
             "error.html",
-            title="Git staging failed (certificate)",
+            title="Git add/commit/push failed",
             detail=str(e),
         ), 500
 
-    # -----------------------------
-    # Git add/commit/push (existing behavior)
-    # - git_add_commit_push will add/commit/push the entry file,
-    #   and since PDF is already staged, it will be included in the same commit.
-    # -----------------------------
-    git_result: GitResult = git_add_commit_push(
-        repo_root=ctx.repo_root,
-        file_path=target_path,
-        commit_message=f"Add registry entry {entry_id}",
-    )
-
-    # Open PDF AFTER successful commit/push (best effort)
-    _open_file_best_effort(pdf_path)
+    # Open the *public* PDF AFTER successful push (best effort)
+    _open_file_best_effort(public_pdf_path)
 
     # Registry URLs (relative, QR-safe architecture)
     registry_url = f"/registry/{entry_id}"
     qr_url = f"/r/{entry_id}"
 
-    # Certificate URLs
-    certificate_site_path = f"/certificates/{entry_id}/certificate.pdf"
-    try:
-        certificate_url = certificate_public_url(entry_id)
-    except Exception:
-        certificate_url = ""
+    # Certificate URLs (published path)
+    certificate_site_path = f"/certificates/{entry_id}.pdf"
+    certificate_url = certificate_site_path  # keep relative (no hardcoded domain)
 
     return render_template(
         "result.html",
@@ -317,7 +370,7 @@ def commit():
         payload_json=payload_json,
 
         # NEW fields for your UI:
-        certificate_file_path=str(pdf_path),
+        certificate_file_path=str(public_pdf_path),
         certificate_site_path=certificate_site_path,
         certificate_url=certificate_url,
     )
