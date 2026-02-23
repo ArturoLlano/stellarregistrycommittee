@@ -4,14 +4,15 @@ import base64
 import json
 import os
 from dataclasses import asdict
+
 from flask import Flask, render_template, request
 
-from registrar.entries import DuplicateMatch, find_duplicates, list_entry_files
+from registrar.entries import find_duplicates
 from registrar.git_ops import GitResult, git_add_commit_push
-from registrar.repo import RepoContext, detect_repo_context
+from registrar.repo import detect_repo_context
 from registrar.schema import build_entry_payload
 from registrar.util import iso_utc_now, safe_int
-from registrar.vizier import fetch_sao_coordinates_best_effort
+from registrar.vizier import fetch_sao_metadata_best_effort
 
 
 def create_app() -> Flask:
@@ -40,7 +41,8 @@ def preview():
         "inscription_motto": (request.form.get("inscription_motto") or "").strip(),
         "recorded_by": (request.form.get("recorded_by") or "").strip(),
         "sponsor": (request.form.get("sponsor") or "").strip(),
-        "do_lookup": (request.form.get("do_lookup") or "on").strip(),  # "on" or ""
+        # checkbox: if unchecked, it won't exist in POST => becomes ""
+        "do_lookup": (request.form.get("do_lookup") or "").strip(),  # "on" or ""
     }
 
     sao = safe_int(form["sao"])
@@ -55,22 +57,45 @@ def preview():
         # Show a clear warning and refuse to proceed
         return render_template("index.html", error=None, form=form, duplicates=dups, sao=sao), 409
 
-    # Best-effort coordinate lookup (optional)
+    # Best-effort metadata lookup (optional)
+    sao_meta = None
     coordinates = None
     lookup_error = None
+
     if form["do_lookup"]:
-        coordinates, lookup_error = fetch_sao_coordinates_best_effort(sao)
+        sao_meta, lookup_error = fetch_sao_metadata_best_effort(sao)
+        if sao_meta and isinstance(sao_meta.get("coordinates"), dict):
+            c = sao_meta["coordinates"]
+            coordinates = {
+                "ra_hms": c.get("ra_hms", "") or "",
+                "dec_dms": c.get("dec_dms", "") or "",
+            }
 
     # Build preview payload + ID (no file written yet)
-    payload = build_entry_payload(
-        sao=sao,
-        inscription_name=form["inscription_name"],
-        inscription_motto=form["inscription_motto"] or None,
-        recorded_by=form["recorded_by"] or None,
-        sponsor=form["sponsor"] or None,
-        recorded_at_utc=iso_utc_now(),
-        coordinates=coordinates,
-    )
+    # This call supports both:
+    #  - new schema.py: build_entry_payload(..., sao_meta=sao_meta)
+    #  - old schema.py: build_entry_payload(..., coordinates=coordinates)
+    try:
+        payload = build_entry_payload(
+            sao=sao,
+            inscription_name=form["inscription_name"],
+            inscription_motto=form["inscription_motto"] or None,
+            recorded_by=form["recorded_by"] or None,
+            sponsor=form["sponsor"] or None,
+            recorded_at_utc=iso_utc_now(),
+            coordinates=coordinates,
+            sao_meta=sao_meta,
+        )
+    except TypeError:
+        payload = build_entry_payload(
+            sao=sao,
+            inscription_name=form["inscription_name"],
+            inscription_motto=form["inscription_motto"] or None,
+            recorded_by=form["recorded_by"] or None,
+            sponsor=form["sponsor"] or None,
+            recorded_at_utc=iso_utc_now(),
+            coordinates=coordinates,
+        )
 
     payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
     payload_b64 = base64.b64encode(payload_json.encode("utf-8")).decode("ascii")
