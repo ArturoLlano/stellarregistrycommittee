@@ -227,7 +227,7 @@ def commit():
     target_path.write_text(payload_json + "\n", encoding="utf-8")
 
     # -----------------------------
-    # Generate certificate PDF (somewhere in tools/..., then COPY to public/)
+    # Generate certificate PDF (tools output) -> COPY to public/
     # -----------------------------
     generated_pdf_path = None
     public_pdf_path = None
@@ -290,7 +290,7 @@ def commit():
     git_steps = [
         f'git add -- "{rel_json}" "{rel_pdf}"',
         f'git commit -m "Add registry entry {entry_id}" -- "{rel_json}" "{rel_pdf}"',
-        "git push",
+        "git push (auto-rebase if needed)",
     ]
 
     def _run_git(args: list[str]) -> tuple[int, str, str]:
@@ -302,6 +302,45 @@ def commit():
         )
         return p.returncode, (p.stdout or ""), (p.stderr or "")
 
+    def _git_push_with_rebase_retry() -> tuple[str, str]:
+        """
+        Try push once. If rejected (remote ahead), do fetch+rebase and retry push.
+        If rebase conflicts, abort and raise with instructions.
+        """
+        rc, out, err = _run_git(["push"])
+        if rc == 0:
+            return out, err
+
+        combined = (out + "\n" + err).lower()
+        needs_sync = ("fetch first" in combined) or ("rejected" in combined) or ("non-fast-forward" in combined)
+        if not needs_sync:
+            raise RuntimeError(f"git push failed:\n{err or out}")
+
+        rcF, outF, errF = _run_git(["fetch", "origin", "main"])
+        if rcF != 0:
+            raise RuntimeError(f"git fetch failed:\n{errF or outF}")
+
+        rcR, outR, errR = _run_git(["rebase", "origin/main"])
+        if rcR != 0:
+            _run_git(["rebase", "--abort"])
+            raise RuntimeError(
+                "git rebase failed (likely a conflict). Resolve manually in terminal:\n\n"
+                "  cd C:\\Users\\llano\\Repos\\stellarregistrycommittee\n"
+                "  git pull --rebase origin main\n"
+                "  # fix conflicts\n"
+                "  git rebase --continue\n"
+                "  git push\n\n"
+                f"Details:\n{errR or outR}"
+            )
+
+        rc2, out2, err2 = _run_git(["push"])
+        if rc2 != 0:
+            raise RuntimeError(f"git push failed after rebase:\n{err2 or out2}")
+
+        return (out + outF + outR + out2), (err + errF + errR + err2)
+
+    committed = False
+
     try:
         rc1, out1, err1 = _run_git(["add", "--", rel_json, rel_pdf])
         if rc1 != 0:
@@ -309,38 +348,30 @@ def commit():
 
         rc2, out2, err2 = _run_git(["commit", "-m", f"Add registry entry {entry_id}", "--", rel_json, rel_pdf])
         if rc2 != 0:
-            # Common case: "nothing to commit" (shouldn't happen here, but handle anyway)
             raise RuntimeError(f"git commit failed:\n{err2 or out2}")
+        committed = True
 
-        rc3, out3, err3 = _run_git(["push"])
-        if rc3 != 0:
-            raise RuntimeError(f"git push failed:\n{err3 or out3}")
+        push_out, push_err = _git_push_with_rebase_retry()
 
         git_result = {
             "ok": True,
             "steps": git_steps,
-            "stdout": out1 + out2 + out3,
-            "stderr": err1 + err2 + err3,
+            "stdout": out1 + out2 + push_out,
+            "stderr": err1 + err2 + push_err,
         }
 
     except Exception as e:
-        # Roll back files to keep commit endpoint clean (best effort)
-        try:
-            target_path.unlink(missing_ok=True)
-        except Exception:
-            pass
-        try:
-            if public_pdf_path:
-                public_pdf_path.unlink(missing_ok=True)
-        except Exception:
-            pass
-
-        git_result = {
-            "ok": False,
-            "steps": git_steps,
-            "stdout": "",
-            "stderr": str(e),
-        }
+        # If we never created a commit, we can safely delete the files (keep endpoint atomic)
+        if not committed:
+            try:
+                target_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+            try:
+                if public_pdf_path:
+                    public_pdf_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
         return render_template(
             "error.html",
@@ -357,7 +388,7 @@ def commit():
 
     # Certificate URLs (published path)
     certificate_site_path = f"/certificates/{entry_id}.pdf"
-    certificate_url = certificate_site_path  # keep relative (no hardcoded domain)
+    certificate_url = certificate_site_path  # relative only
 
     return render_template(
         "result.html",
@@ -368,8 +399,6 @@ def commit():
         qr_url=qr_url,
         git=git_result,
         payload_json=payload_json,
-
-        # NEW fields for your UI:
         certificate_file_path=str(public_pdf_path),
         certificate_site_path=certificate_site_path,
         certificate_url=certificate_url,
