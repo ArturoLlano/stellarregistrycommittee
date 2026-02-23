@@ -1,6 +1,3 @@
-# Generated certificates (do not commit)
-public/certificates/
-
 # Local backup files
 tools/registrar/*old.py
 tools/registrar/registrar/*old.py
