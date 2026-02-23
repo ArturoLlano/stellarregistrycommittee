@@ -18,6 +18,8 @@ pip install -r requirements.txt
 REM Optional: set a fixed port (default is 5055)
 REM set REGISTRAR_PORT=5055
 
+set TSRC_PUBLIC_BASE_URL=https://stellarregistrycommittee.pages.dev
+
 python app.py
 
 popd

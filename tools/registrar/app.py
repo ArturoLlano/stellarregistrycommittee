@@ -386,9 +386,10 @@ def commit():
     registry_url = f"/registry/{entry_id}"
     qr_url = f"/r/{entry_id}"
 
-    # Certificate URLs (published path)
+
     certificate_site_path = f"/certificates/{entry_id}.pdf"
-    certificate_url = certificate_site_path  # relative only
+    public_base = (os.environ.get("TSRC_PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    certificate_url = f"{public_base}{certificate_site_path}" if public_base else certificate_site_path
 
     return render_template(
         "result.html",

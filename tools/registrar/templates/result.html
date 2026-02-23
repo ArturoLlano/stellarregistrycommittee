@@ -11,6 +11,12 @@
       <div><strong>File:</strong> <code>{{ file_path }}</code></div>
       <div><strong>Registry URL:</strong> <code>{{ registry_url }}</code></div>
       <div><strong>QR URL:</strong> <code>{{ qr_url }}</code></div>
+      <div><strong>Certificate URL:</strong>
+        <code>
+          <a href="{{ certificate_url }}" target="_blank" rel="noopener noreferrer">{{ certificate_url }}</a>
+        </code>
+      </div>
+      <div><strong>Certificate path:</strong> <code>{{ certificate_site_path }}</code></div>
     </div>
 
     {% if git.ok %}
