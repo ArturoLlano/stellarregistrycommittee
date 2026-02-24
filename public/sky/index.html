@@ -351,28 +351,30 @@ if (showStars) {
         }
 
         aladin.addCatalog(constCat);
-        // --- Font scale for constellation labels: FOV > 100° => 0.2× (PRUEBA) ---
-        const CONST_LABEL_PX = 20; // asegúrate de que coincide con tu labelFont base
-        let constFontScale = 1.0;
+        // --- Auto-hide constellation names when FOV is very wide (>100°) ---
+        const CONST_HIDE_FOV = 100; // >100° => hide
+        let constShown = true;
         
-        function applyConstFontScale(scale) {
-          const px = Math.max(6, Math.round(CONST_LABEL_PX * scale)); // mínimo 6px para que no desaparezca totalmente
-          if (typeof constCat.setOptions === "function") {
-            constCat.setOptions({ labelFont: `${px}px sans-serif` });
-          }
+        function readFovDegForConst() {
+          const f = aladin.getFov();        // [xDeg, yDeg]
+          return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
         }
         
-        (function tickConstLabels() {
-          const f = aladin.getFov();
-          const fovNow = Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+        (function tickConstHide() {
+          const fovNow = readFovDegForConst();
+          const shouldShow = (fovNow <= CONST_HIDE_FOV);
         
-          const desired = (fovNow > 100) ? 0.2 : 1.0; // <-- PRUEBA fuerte
-          if (desired !== constFontScale) {
-            constFontScale = desired;
-            applyConstFontScale(constFontScale);
+          if (shouldShow !== constShown) {
+            constShown = shouldShow;
+            try {
+              if (constShown) aladin.addCatalog(constCat);
+              else aladin.removeCatalog(constCat);
+            } catch (e) {
+              console.warn("Constellation hide/show failed:", e);
+            }
           }
         
-          requestAnimationFrame(tickConstLabels);
+          requestAnimationFrame(tickConstHide);
         })();
 
       }
