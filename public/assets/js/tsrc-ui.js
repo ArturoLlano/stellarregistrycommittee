@@ -31,3 +31,28 @@
     });
   }
 })();
+
+(() => {
+  const cards = document.querySelectorAll('.card.hover-glow');
+  if (!cards.length) return;
+
+  let timer = null;
+
+  cards.forEach((card) => {
+    card.addEventListener('touchstart', () => {
+      card.classList.add('is-tapped');
+      clearTimeout(timer);
+      timer = setTimeout(() => card.classList.remove('is-tapped'), 650);
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => card.classList.remove('is-tapped'), 650);
+    }, { passive: true });
+  });
+
+  // Si el usuario está scrolleando, quita cualquier glow “pegado”
+  window.addEventListener('scroll', () => {
+    cards.forEach(c => c.classList.remove('is-tapped'));
+  }, { passive: true });
+})();

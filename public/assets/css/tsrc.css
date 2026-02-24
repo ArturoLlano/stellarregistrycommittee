@@ -72,6 +72,7 @@ body {
   color: var(--c-white);
   line-height: 1.55;
 }
+* { -webkit-tap-highlight-color: transparent; }
 
 /* Lightweight starfield (pure CSS gradients) */
 body::before {
@@ -245,10 +246,23 @@ hr {
 .card.hover-glow {
   transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
 }
-.card.hover-glow:hover {
+.card.hover-glow:hover,
+.card.hover-glow:active,
+.card.hover-glow:focus-within,
+.card.hover-glow.is-tapped {
   border-color: rgba(0, 237, 255, 0.28);
   box-shadow: var(--shadow), var(--glow-cyan);
   transform: translateY(-1px);
+}
+
+/* En touch, mejor no “levantar” (evita saltitos al tocar/scroll) */
+@media (hover: none) and (pointer: coarse) {
+  .card.hover-glow:hover,
+  .card.hover-glow:active,
+  .card.hover-glow:focus-within,
+  .card.hover-glow.is-tapped {
+    transform: none;
+  }
 }
 
 /* -----------------------------
