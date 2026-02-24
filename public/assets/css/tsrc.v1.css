@@ -367,6 +367,14 @@ body.page-home .site-header{ display:none; }
 }
 
 /* Wordmark / logo used in your current HTML */
+.home-brand-img{
+  height: 30px;
+  width: auto;
+  opacity: .96;
+  display:block;
+}
+
+/* (Optional) if you later rename to .home-mark, keep both) */
 .home-mark{
   height: 30px;
   width: auto;
