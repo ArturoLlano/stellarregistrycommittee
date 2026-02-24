@@ -352,28 +352,40 @@ if (showStars) {
 
         aladin.addCatalog(constCat);
         // --- Auto-hide constellation names when FOV is very wide (>100°) ---
-        const CONST_HIDE_FOV = 100; // >100° => hide
-        let constShown = true;
+        // (Robusto: no depende de removeCatalog; vacía/recarga sources)
+        const CONST_HIDE_FOV = 100; // >100° => hide labels
+        
+        // Construimos sources UNA sola vez (para poder quitar/poner rápido)
+        const constSources = consts.map(c => A.source(c.ra_deg, c.dec_deg, { name: c.name }));
+        
+        // Limpia el catálogo actual y lo llena con nuestras sources (consistente)
+        try { constCat.addSources(constSources); } catch (e) { /* ya tiene sources, ok */ }
+        
+        let constHidden = false;
         
         function readFovDegForConst() {
-          const f = aladin.getFov();        // [xDeg, yDeg]
+          const f = aladin.getFov(); // [xDeg, yDeg]
           return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+        }
+        
+        function setConstHidden(hidden) {
+          if (hidden === constHidden) return;
+          constHidden = hidden;
+        
+          if (constHidden) {
+            // Quita todas las etiquetas (removiendo sources)
+            for (const src of constSources) {
+              try { constCat.remove(src); } catch (e) {}
+            }
+          } else {
+            // Vuelve a poner todas las etiquetas
+            try { constCat.addSources(constSources); } catch (e) {}
+          }
         }
         
         (function tickConstHide() {
           const fovNow = readFovDegForConst();
-          const shouldShow = (fovNow <= CONST_HIDE_FOV);
-        
-          if (shouldShow !== constShown) {
-            constShown = shouldShow;
-            try {
-              if (constShown) aladin.addCatalog(constCat);
-              else aladin.removeCatalog(constCat);
-            } catch (e) {
-              console.warn("Constellation hide/show failed:", e);
-            }
-          }
-        
+          setConstHidden(fovNow > CONST_HIDE_FOV);
           requestAnimationFrame(tickConstHide);
         })();
 
