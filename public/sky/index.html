@@ -179,83 +179,83 @@
       
 
       // --- Render stars (dynamic by FOV) + halo labels + font scale on tight FOV ---
-if (showStars) {
-  const starsRes = results.find(r => r.kind === "stars");
-  const allStars = normalizeStars(starsRes?.rows ?? []);
-
-  // Orden base: más brillantes primero
-  allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
-
-  // 1) Tablita de reglas por FOV (en grados)
-  const STAR_RULES = [
-    { fovMin: 100, mag: 2.0, max: 80  },
-    { fovMin: 60,  mag: 3.0, max: 140 },
-    { fovMin: 30,  mag: 4.0, max: 220 },
-    { fovMin: 15,  mag: 5.0, max: 320 },
-    { fovMin: 0,   mag: 6.0, max: 450 },
-  ];
-
-  // 2) Tipografía base + halo
-  const STAR_LABEL_PX = 14;   // blanco base
-  const HALO_EXTRA_PX = 2;    // halo = blanco + extra
-  const HALO_ALPHA = 0.85;    // opacidad del halo (0..1)
-
-  // 3) Dos catálogos: halo (debajo) + principal (encima)
-  const starHaloCat = A.catalog({
-    name: "Stars-halo",
-    sourceSize: 0,                 // sin marcador
-    shape: "circle",
-    color: "rgba(0,0,0,0)",
-    displayLabel: true,
-    labelColumn: "name",
-    labelColor: `rgba(0,0,0,${HALO_ALPHA})`,
-    labelFont: `${STAR_LABEL_PX + HALO_EXTRA_PX}px sans-serif`,
-    onClick: "showPopup"
-  });
-
-  const starCat = A.catalog({
-    name: "Stars",
-    color: "#ffffff",
-    shape: "circle",
-    sourceSize: 14,
-    onClick: "showPopup",
-    displayLabel: true,
-    labelColumn: "name",
-    labelColor: "rgba(255,255,255,0.95)",
-    labelFont: `bold ${STAR_LABEL_PX}px sans-serif`
-  });
-
-  // IMPORTANTE: primero halo, luego blanco
-  aladin.addCatalog(starHaloCat);
-  aladin.addCatalog(starCat);
-
-  // 4) Render function: limpia y vuelve a poblar según regla
-  let currentSources = [];
-  let lastRuleKey = "";
-  let lastFov = -1;
-
-  // Escala de fuente por FOV (solo tipografía)
-  let starFontScale = 1.0;
-
-  function pickRuleByFov(fovDeg) {
-    for (const r of STAR_RULES) {
-      if (fovDeg >= r.fovMin) return r;
-    }
-    return STAR_RULES[STAR_RULES.length - 1];
-  }
-
-  function applyFontScale(scale) {
-    const whitePx = Math.round(STAR_LABEL_PX * scale);
-    const haloPx  = Math.round((STAR_LABEL_PX + HALO_EXTRA_PX) * scale);
-
-    // Algunos builds soportan setOptions; si no existe, simplemente no cambia (pero no truena)
-    if (typeof starCat.setOptions === "function") {
-      starCat.setOptions({ labelFont: `bold ${whitePx}px sans-serif` });
-    }
-    if (typeof starHaloCat.setOptions === "function") {
-      starHaloCat.setOptions({ labelFont: `${haloPx}px sans-serif` });
-    }
-  }
+      if (showStars) {
+        const starsRes = results.find(r => r.kind === "stars");
+        const allStars = normalizeStars(starsRes?.rows ?? []);
+      
+        // Orden base: más brillantes primero
+        allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
+      
+        // 1) Tablita de reglas por FOV (en grados)
+        const STAR_RULES = [
+          { fovMin: 100, mag: 2.0, max: 80  },
+          { fovMin: 60,  mag: 3.0, max: 140 },
+          { fovMin: 30,  mag: 4.0, max: 220 },
+          { fovMin: 15,  mag: 5.0, max: 320 },
+          { fovMin: 0,   mag: 6.0, max: 450 },
+        ];
+      
+        // 2) Tipografía base + halo
+        const STAR_LABEL_PX = 14;   // blanco base
+        const HALO_EXTRA_PX = 2;    // halo = blanco + extra
+        const HALO_ALPHA = 0.85;    // opacidad del halo (0..1)
+      
+        // 3) Dos catálogos: halo (debajo) + principal (encima)
+        const starHaloCat = A.catalog({
+          name: "Stars-halo",
+          sourceSize: 0,                 // sin marcador
+          shape: "circle",
+          color: "rgba(0,0,0,0)",
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: `rgba(0,0,0,${HALO_ALPHA})`,
+          labelFont: `${STAR_LABEL_PX + HALO_EXTRA_PX}px sans-serif`,
+          onClick: "showPopup"
+        });
+      
+        const starCat = A.catalog({
+          name: "Stars",
+          color: "#ffffff",
+          shape: "circle",
+          sourceSize: 14,
+          onClick: "showPopup",
+          displayLabel: true,
+          labelColumn: "name",
+          labelColor: "rgba(255,255,255,0.95)",
+          labelFont: `bold ${STAR_LABEL_PX}px sans-serif`
+        });
+      
+        // IMPORTANTE: primero halo, luego blanco
+        aladin.addCatalog(starHaloCat);
+        aladin.addCatalog(starCat);
+      
+        // 4) Render function: limpia y vuelve a poblar según regla
+        let currentSources = [];
+        let lastRuleKey = "";
+        let lastFov = -1;
+      
+        // Escala de fuente por FOV (solo tipografía)
+        let starFontScale = 1.0;
+      
+        function pickRuleByFov(fovDeg) {
+          for (const r of STAR_RULES) {
+            if (fovDeg >= r.fovMin) return r;
+          }
+          return STAR_RULES[STAR_RULES.length - 1];
+        }
+      
+        function applyFontScale(scale) {
+          const whitePx = Math.round(STAR_LABEL_PX * scale);
+          const haloPx  = Math.round((STAR_LABEL_PX + HALO_EXTRA_PX) * scale);
+      
+          // Algunos builds soportan setOptions; si no existe, simplemente no cambia (pero no truena)
+          if (typeof starCat.setOptions === "function") {
+            starCat.setOptions({ labelFont: `bold ${whitePx}px sans-serif` });
+          }
+          if (typeof starHaloCat.setOptions === "function") {
+            starHaloCat.setOptions({ labelFont: `${haloPx}px sans-serif` });
+          }
+        }
 
   function applyRule(rule) {
     const mag = rule.mag;
@@ -354,7 +354,7 @@ if (showStars) {
 
         // --- Auto-hide constellation names when FOV is very wide (>100°) ---
         // Use the same mechanism as the "eye" toggle in the Layers UI.
-        const CONST_HIDE_FOV = 100;
+        const CONST_HIDE_FOV = 200;
         let constIsHidden = false;
         
         function readFovDegForConst() {
