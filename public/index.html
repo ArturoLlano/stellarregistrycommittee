@@ -28,7 +28,7 @@
         <img src="/assets/brand/logo/tsrc-logo-light-noname.svg" alt="The Stellar Registry Committee" />
         <div class="title">
           <strong>The Stellar Registry Committee</strong>
-          <span>Private_commemorative registry</span>
+          <span>Formal registry records</span>
         </div>
       </a>
 
@@ -41,87 +41,133 @@
   </header>
 
   <main class="section home-stage">
-  <div class="container container-narrow">
-    <div class="hero-shell stack">
+    <div class="container container-narrow">
+      <div class="hero-shell stack">
 
-      <div class="home-topbar">
-        <a class="home-brand" href="/">
-          <img class="home-brand-img" src="/assets/brand/logo/tsrc-logo-light-noname.svg" alt="The Stellar Registry Committee" />
-          <div class="home-brand-text">
-            <strong>The Stellar Registry Committee</strong>
-            <span>Private commemorative_registry</span>
-          </div>
-        </a>
-        </a>
-      
-        <nav class="home-nav" aria-label="Primary">
-          <a href="/">Resolver</a>
-          <a href="/__app/registry.html">Registry UI</a>
-          <a href="/legal/disclaimer/">Disclaimer</a>
-        </nav>
-      </div>
-
-      <div>
-        <div class="kicker">Private_commemorative_registry</div>
-        
-        <p class="lead">
-          Formal registry records for symbolic dedications. Entries are presented with standardized astronomical fields
-          (RA/Dec, epoch, and catalog references when available).
-        </p>
-      </div>
-
-      <section class="card hover-glow">
-        <div class="card-hd">
-          <h2 class="h2">Find a record by Registry ID</h2>
-        </div>
-        <div class="card-bd">
-          <form data-record-lookup class="stack">
-            <div class="input-group">
-              <input
-                class="input"
-                id="record_id"
-                name="record_id"
-                placeholder="e.g., SAO-123456-AB12"
-                autocomplete="off"
-              />
-              <button class="btn btn-primary btn--primary" type="submit">Open record</button>
+        <div class="home-topbar">
+          <a class="home-brand" href="/">
+            <img class="home-brand-img" src="/assets/brand/logo/tsrc-logo-light-noname.svg" alt="The Stellar Registry Committee" />
+            <div class="home-brand-text">
+              <strong>The Stellar Registry Committee</strong>
+              <span>Formal registry records</span>
             </div>
-            <div class="muted small" style="margin-top: 10px;" data-msg></div>
-          </form>
+          </a>
 
-          <div class="qr-line">
-            <span class="muted small">QR permanence:</span>
-            <span class="mono">/r/&lt;ID&gt;</span>
-            <span class="muted small">→</span>
-            <span class="mono">/registry/&lt;ID&gt;</span>
-          </div>
+          <nav class="home-nav" aria-label="Primary">
+            <a href="/">Resolver</a>
+            <a href="/__app/registry.html">Registry UI</a>
+            <a href="/legal/disclaimer/">Disclaimer</a>
+          </nav>
         </div>
-      </section>
 
-      <section class="card hover-glow">
-        <div class="card-hd">
-          <h2 class="h2">Standards & permanence</h2>
-          <div class="muted small">Stable routing + standardized astronomical fields.</div>
-        </div>
-        <div class="card-bd">
-          <ul style="margin:0; padding-left:18px;">
-            <li>QR codes resolve via <span class="mono">/r/&lt;ID&gt;</span> to the canonical record at <span class="mono">/registry/&lt;ID&gt;</span>.</li>
-            <li>Records present coordinates as RA (h m s) and Dec (° ′ ″), with epoch stated (e.g., J2000).</li>
-            <li>Catalog references (e.g., SAO) are stored as structured fields for future interoperability.</li>
-          </ul>
-          <p class="muted small" style="margin-top: 12px;">
-            This is a private commemorative registry and is not affiliated with the International Astronomical Union (IAU).
+        <div>
+          <!-- Keep the phrase only once on-page -->
+          <div class="kicker">Private commemorative registry</div>
+          <h1 class="h1">Formal records for symbolic dedications</h1>
+          <p class="lead">
+            Entries are published with standardized astronomical fields (RA/Dec, epoch, and catalog references when available),
+            designed for stable long-term referencing.
           </p>
         </div>
-      </section>
 
-      <footer class="site-footer">
-        <div class="muted small">© The Stellar Registry Committee. Private commemorative registry.</div>
-      </footer>
+        <!-- 1) Search / Resolver -->
+        <section class="card hover-glow">
+          <div class="card-hd">
+            <h2 class="h2">Find a record by Registry ID</h2>
+          </div>
+          <div class="card-bd">
+            <form data-record-lookup class="stack">
+              <div class="input-group">
+                <input
+                  class="input"
+                  id="record_id"
+                  name="record_id"
+                  placeholder="e.g., SAO-123456-AB12"
+                  autocomplete="off"
+                />
+                <button class="btn btn-primary btn--primary" type="submit">Open record</button>
+              </div>
+              <div class="muted small" style="margin-top: 10px;" data-msg></div>
+            </form>
 
+            <div class="qr-line">
+              <span class="muted small">QR permanence:</span>
+              <span class="mono">/r/&lt;ID&gt;</span>
+              <span class="muted small">→</span>
+              <span class="mono">/registry/&lt;ID&gt;</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2) What a record contains -->
+        <section class="card hover-glow">
+          <div class="card-hd">
+            <h2 class="h2">What a record contains</h2>
+            <div class="muted small">A consistent archival schema for each entry.</div>
+          </div>
+          <div class="card-bd">
+            <ul style="margin:0; padding-left:18px;">
+              <li><strong>Coordinates:</strong> RA (h m s), Dec (° ′ ″), with epoch stated (e.g., J2000).</li>
+              <li><strong>Catalog references:</strong> structured identifiers (e.g., SAO) when available.</li>
+              <li><strong>Inscription:</strong> recorded name and motto, preserved as submitted.</li>
+              <li><strong>Provenance:</strong> recorded-by and sponsor fields (when present).</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 3) Permanence & preservation -->
+        <section class="card hover-glow">
+          <div class="card-hd">
+            <h2 class="h2">Permanence & preservation</h2>
+            <div class="muted small">Stable routing + regenerable documents.</div>
+          </div>
+          <div class="card-bd">
+            <ul style="margin:0; padding-left:18px;">
+              <li>QR codes resolve through <span class="mono">/r/&lt;ID&gt;</span> to the canonical record at <span class="mono">/registry/&lt;ID&gt;</span>.</li>
+              <li>Records are published as structured JSON for long-term readability and migration safety.</li>
+              <li>Certificates and derived documents can be regenerated from the published entry data.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4) Brief educational notes -->
+        <section class="card hover-glow">
+          <div class="card-hd">
+            <h2 class="h2">Notes on stars and naming</h2>
+            <div class="muted small">Short context, no mythology overload.</div>
+          </div>
+          <div class="card-bd">
+            <p style="margin:0 0 10px 0;">
+              <strong>Naming traditions.</strong> Many familiar star names preserve historical layers (Arabic, Greek, Latin).
+              Modern astronomy relies on standardized catalog designations to avoid ambiguity.
+            </p>
+            <p style="margin:0;">
+              <strong>What a star is.</strong> A star is a luminous sphere of hot plasma powered by nuclear fusion.
+              Coordinates and epoch allow a specific object to be referenced consistently across maps over time.
+            </p>
+          </div>
+        </section>
+
+        <!-- 5) Disclosure -->
+        <section class="card hover-glow">
+          <div class="card-hd">
+            <h2 class="h2">Disclosure</h2>
+          </div>
+          <div class="card-bd">
+            <p class="muted small" style="margin:0;">
+              This is an independent commemorative registry and is not affiliated with the International Astronomical Union (IAU).
+              Entries are symbolic dedications and do not confer official astronomical naming rights.
+            </p>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <div class="muted small">© The Stellar Registry Committee.</div>
+        </footer>
+
+      </div>
     </div>
-  </div>
-</main>
+  </main>
 
   <!-- KEEP: your existing page logic -->
   <script type="module" src="/assets/js/pages/home.js"></script>
