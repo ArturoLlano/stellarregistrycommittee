@@ -4,21 +4,31 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   X-Frame-Options: SAMEORIGIN
 
+/ 
+  Cache-Control: no-store
+
+/*.html
+  Cache-Control: no-store
+
+/__app/*
+  Cache-Control: no-store
+
 /registry*
-  Cache-Control: no-cache
+  Cache-Control: no-store
 
 /r*
-  Cache-Control: no-cache
+  Cache-Control: no-store
+
+/sky/*
+  Cache-Control: no-store
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
 
 /assets/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=604800, immutable
 
 /data/*
   Cache-Control: public, max-age=300
-
-/sky/*
-  X-Frame-Options: SAMEORIGIN
-  Content-Security-Policy: frame-ancestors 'self'
 
 /certificates/*
   X-Robots-Tag: noindex, nofollow, nosnippet
