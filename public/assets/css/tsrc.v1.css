@@ -1110,7 +1110,7 @@ body.page-registry .registry-brand{
 }
 
 body.page-registry .registry-logo{
-  height: 56px;  /* 48–72 a gusto */
+  height: 180px;  /* 48–72 a gusto */
   width: auto;
   opacity: 0.95;
 }
