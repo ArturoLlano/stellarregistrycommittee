@@ -851,3 +851,214 @@ body.page-home .home-stage{
     max-height: 70px !important;
   }
 }
+
+/* =========================
+   Registry page styling
+   ========================= */
+
+body.page-registry main,
+body.page-registry header,
+body.page-registry footer{
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+body.page-registry header{
+  padding-top: 34px;
+}
+
+/* Top “brand” label */
+body.page-registry .brand{
+  color: var(--nebula-silver, #cccccc);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* Title + lede */
+body.page-registry .h1{
+  margin: 10px 0 0;
+  font-size: clamp(32px, 4.2vw, 44px);
+  letter-spacing: -0.02em;
+}
+
+body.page-registry .lede{
+  margin: 10px 0 0;
+  max-width: 78ch;
+  color: var(--nebula-silver, #cccccc);
+}
+
+/* Badge */
+body.page-registry .badge{
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(17,17,17,.35);
+  color: var(--nebula-silver, #cccccc);
+}
+
+/* Card wrapper (reuse your glass style) */
+body.page-registry .card{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(17,17,17,.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  padding: 18px;
+}
+
+/* Key-value table */
+body.page-registry .kv{
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+body.page-registry .kv__row{
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+body.page-registry .kv__row:first-child{
+  border-top: none;
+}
+
+body.page-registry .kv__k{
+  color: rgba(255,255,255,.72);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+body.page-registry .kv__v{
+  color: var(--star-white, #ffffff);
+  min-width: 0;
+}
+
+body.page-registry .kv__v code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.10);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--atmos-cyan, #00edff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
+}
+
+body.page-registry a{
+  color: var(--atmos-cyan, #00edff);
+  text-decoration: none;
+}
+
+body.page-registry a:hover{
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Actions buttons (reuse your button styling if present; fallback here) */
+body.page-registry .actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+body.page-registry .actions .btn,
+body.page-registry .map-btn,
+body.page-registry #btnOpenMapLarge{
+  appearance: none;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(17,17,17,.35);
+  color: var(--star-white, #fff);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+body.page-registry .actions .btn:hover,
+body.page-registry .map-btn:hover,
+body.page-registry #btnOpenMapLarge:hover{
+  border-color: rgba(0,237,255,.28);
+  box-shadow: 0 0 0 1px rgba(0,237,255,.18), 0 18px 60px rgba(0,0,0,.35);
+}
+
+/* Map block */
+body.page-registry .map-block{
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+body.page-registry .map-meta{
+  font-size: 12px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.68);
+}
+
+body.page-registry .map-sub{
+  font-size: 13px;
+  color: rgba(255,255,255,.68);
+  margin-top: 2px;
+}
+
+body.page-registry .map-frame{
+  width: 100%;
+  height: 420px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  overflow: hidden;
+  background: #000;
+}
+
+/* Responsive */
+@media (max-width: 820px){
+  body.page-registry .kv__row{
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* Print: clean white page, hide map + buttons */
+@media print{
+  body.page-registry{
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.page-registry::before,
+  body.page-registry .site-header,
+  body.page-registry .map-block,
+  body.page-registry .actions,
+  body.page-registry footer{
+    display: none !important;
+  }
+
+  body.page-registry .card,
+  body.page-registry .kv{
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  body.page-registry .kv__k{ color:#333 !important; }
+  body.page-registry .kv__v{ color:#000 !important; }
+
+  body.page-registry .kv__v code{
+    color:#000 !important;
+    background:#f2f2f2 !important;
+    border-color:#ddd !important;
+  }
+}
