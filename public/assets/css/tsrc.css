@@ -833,3 +833,21 @@ body.page-home .home-stage{
   .home-brand-text strong{ font-size: 0.92rem; }
   .home-mark{ width: 24px; height: 24px; }
 }
+
+/* ===== Home topbar wordmark sizing ===== */
+.home-brand-img{
+  height: 30px !important;      /* sube a 34 o 38 si lo quieres más grande */
+  width: auto !important;
+  max-height: 30px !important;
+  max-width: 420px !important;
+  display: block !important;
+  opacity: 0.96;
+}
+
+/* Mobile: reduce para que no empuje el menú */
+@media (max-width: 520px){
+  .home-brand-img{
+    height: 22px !important;
+    max-height: 22px !important;
+  }
+}
