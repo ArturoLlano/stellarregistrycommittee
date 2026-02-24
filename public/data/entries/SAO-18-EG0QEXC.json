@@ -1,0 +1,64 @@
+{
+  "id": "SAO-18-EG0QEXC",
+  "status": "active",
+  "recorded_at_utc": "2026-02-24T14:42:58.466189Z",
+  "designation": {
+    "title": "Registry Entry — SAO 18",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "18"
+      }
+    ],
+    "inscription": {
+      "name": "Psieris",
+      "motto": "La estrella del alma que ama, del amor que espera sin apagarse, y de dos corazones que, aun separados, siguen mirando el mismo cielo."
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "00 07 10.197",
+      "dec_dms": "+80 43 46.35",
+      "ra_deg": 1.7924875,
+      "dec_deg": 80.72954167
+    },
+    "photometry": {
+      "v_mag": 9.2,
+      "p_mag": 10.6,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Cep",
+      "name": "Cepheus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Jorge",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 18, with visual magnitude: 9.2, and located at the coordinates: RA: 00h 07m 10.20s, and Dec +80º 43' 46.35'', to be recorded in this registry as:"
+  }
+}
