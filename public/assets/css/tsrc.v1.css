@@ -1079,14 +1079,13 @@ body.page-registry .map-frame{
 }
 
 .registry-logo{
-  height: 180px;       /* prueba 64–80 según gusto */
+  height: 64px;       /* prueba 64–80 */
   width: auto;
   opacity: 0.95;
 }
 
-/* Slightly smaller on mobile */
 @media (max-width: 600px){
   .registry-logo{
-    height: 100px;
+    height: 48px;
   }
 }
