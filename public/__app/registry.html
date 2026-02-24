@@ -19,8 +19,13 @@
 
   <div class="brand">THE STELLAR REGISTRY COMMITTEE</div>
   <h1 class="h1">Registry Record</h1>
-  <p class="lede">Private commemorative registry record (not affiliated with the IAU).</p>
-  <span class="badge">active</span>
+  <p class="lede" id="status_text">Private commemorative registry record (not affiliated with the IAU).</p>
+  <span class="badge" id="status_badge">active</span>
+  
+  <!-- Optional: shown only when visiting /__app/* directly -->
+  <p id="internalNotice" class="muted" style="display:none; margin:10px 0 0;">
+    Internal renderer endpoint. Use <code>/registry/&lt;ID&gt;</code> or <code>/r/&lt;ID&gt;</code>.
+  </p>
 </header>
 
   <main>
