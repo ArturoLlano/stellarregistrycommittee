@@ -443,25 +443,32 @@ body.page-home .site-header{ display:none; }
   .home-mark{ height: 22px; }
 }
 
-/* Desktop: inline input + button, with gap */
-@media (min-width: 721px){
-  body.page-home .btn-row{
-    display:flex;
-    gap: 12px;
-    align-items: center;
-  }
-  body.page-home .btn-row .input{ flex: 1 1 auto; }
-  body.page-home .btn-row .btn{ flex: 0 0 auto; }
+/* Home lookup layout (matches your HTML: .input-group) */
+body.page-home .input-group{
+  display: flex;
+  gap: 12px;              /* espacio entre input y botón */
+  align-items: center;
 }
 
-/* Mobile: stack */
+body.page-home .input-group .input{
+  flex: 1 1 auto;
+  min-width: 220px;
+}
+
+body.page-home .input-group .btn{
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Mobile: stack nicely */
 @media (max-width: 720px){
-  body.page-home .btn-row{
+  body.page-home .input-group{
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
   }
-  body.page-home .btn-row .btn{ align-self: flex-start; }
+  body.page-home .input-group .btn{
+    align-self: flex-start;
+  }
 }
 
 /* --------------------------------------------------------------------------
