@@ -847,7 +847,7 @@ body.page-home .home-stage{
 /* Mobile: reduce para que no empuje el menú */
 @media (max-width: 520px){
   .home-brand-img{
-    height: 22px !important;
-    max-height: 22px !important;
+    height: 50px !important;
+    max-height: 50px !important;
   }
 }
