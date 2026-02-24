@@ -1,0 +1,853 @@
+/* ==========================================================================
+   TSRC — Aerospace Modernism UI (Phase 1 / Static)
+   File: /assets/css/tsrc.css
+   ========================================================================== */
+
+/* -----------------------------
+   0) Design tokens (required palette)
+------------------------------ */
+:root {
+  /* Deep Space (structure) */
+  --c-void: #0b3d91;        /* Deep Void */
+  --c-midnight: #111111;    /* Midnight Layer */
+  --c-space: #212121;       /* Space Grey */
+
+  /* Mission accents */
+  --c-orange: #fc3d21;      /* Launch Orange */
+  --c-yellow: #f1ff00;      /* Solar Yellow */
+  --c-cyan: #00edff;        /* Atmospheric Cyan */
+
+  /* Text */
+  --c-white: #ffffff;       /* Star White */
+  --c-silver: #cccccc;      /* Nebula Silver */
+
+  /* Derived UI tokens */
+  --bg: var(--c-midnight);
+  --panel: rgba(17, 17, 17, 0.72);
+  --panel-2: rgba(33, 33, 33, 0.62);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-2: rgba(255, 255, 255, 0.18);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --glow-cyan: 0 0 0 1px rgba(0, 237, 255, 0.28), 0 0 22px rgba(0, 237, 255, 0.14);
+  --glow-orange: 0 0 0 1px rgba(252, 61, 33, 0.33), 0 0 22px rgba(252, 61, 33, 0.14);
+
+  /* Radius + spacing */
+  --r-8: 8px;
+  --r-12: 12px;
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 18px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 44px;
+
+  /* Layout */
+  --max: 1120px;
+
+  /* Typography */
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Motion */
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --ease: cubic-bezier(.2,.8,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 0ms; --dur-2: 0ms; }
+}
+
+/* -----------------------------
+   1) Base
+------------------------------ */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+html { color-scheme: dark; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--c-white);
+  line-height: 1.55;
+}
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Lightweight starfield (pure CSS gradients) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(11, 61, 145, 0.35), transparent 60%),
+    radial-gradient(900px 700px at 80% 20%, rgba(0, 237, 255, 0.08), transparent 55%),
+    radial-gradient(800px 600px at 30% 85%, rgba(252, 61, 33, 0.06), transparent 55%),
+    /* "stars" */
+    radial-gradient(1px 1px at 10% 18%, rgba(255,255,255,0.55) 50%, transparent 52%),
+    radial-gradient(1px 1px at 22% 72%, rgba(255,255,255,0.35) 50%, transparent 52%),
+    radial-gradient(1px 1px at 38% 34%, rgba(255,255,255,0.45) 50%, transparent 52%),
+    radial-gradient(1px 1px at 56% 62%, rgba(255,255,255,0.28) 50%, transparent 52%),
+    radial-gradient(1px 1px at 78% 44%, rgba(255,255,255,0.40) 50%, transparent 52%),
+    radial-gradient(1px 1px at 88% 78%, rgba(255,255,255,0.30) 50%, transparent 52%),
+    linear-gradient(180deg, #0a0a0a 0%, #111111 45%, #0a0a0a 100%);
+  opacity: 1;
+}
+
+/* Optional subtle noise (CSS-only approximation via repeating gradient) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.010),
+    rgba(255,255,255,0.010) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+}
+
+a {
+  color: var(--c-cyan);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+a:hover {
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 237, 255, 0.55);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-6) 0;
+}
+
+/* -----------------------------
+   2) Layout helpers
+------------------------------ */
+.container {
+  width: min(var(--max), calc(100% - 2 * var(--space-6)));
+  margin: 0 auto;
+}
+.stack > * + * { margin-top: var(--space-4); }
+.grid {
+  display: grid;
+  gap: var(--space-5);
+}
+.grid.two {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 880px) {
+  .grid.two { grid-template-columns: 1.1fr 0.9fr; }
+}
+
+.mono { font-family: var(--mono); }
+.muted { color: var(--c-silver); }
+.small { font-size: 0.92rem; }
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: rgba(204, 204, 204, 0.85);
+}
+
+/* -----------------------------
+   3) Header / nav (sticky + blur)
+------------------------------ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(17, 17, 17, 0.70);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+.site-header .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+}
+.brand img {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+.brand-mark{
+  filter: brightness(0) invert(1) drop-shadow(0 2px 10px rgba(0,237,255,0.10));
+  opacity: 0.92;
+}
+.brand .title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.brand .title strong {
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+.brand .title span {
+  font-size: 0.78rem;
+  color: rgba(204,204,204,0.9);
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.nav a {
+  color: rgba(255,255,255,0.92);
+  font-size: 0.92rem;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.nav a:hover {
+  border-color: rgba(0, 237, 255, 0.25);
+  box-shadow: 0 0 0 1px rgba(0, 237, 255, 0.10);
+  text-decoration: none;
+}
+
+/* -----------------------------
+   4) Panels / cards (glass)
+------------------------------ */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card .card-hd {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(33,33,33,0.55), rgba(17,17,17,0.25));
+}
+.card .card-bd {
+  padding: var(--space-5);
+}
+.card.hover-glow {
+  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+}
+.card.hover-glow:hover,
+.card.hover-glow:active,
+.card.hover-glow:focus-within,
+.card.hover-glow.is-tapped {
+  border-color: rgba(0, 237, 255, 0.28);
+  box-shadow: var(--shadow), var(--glow-cyan);
+  transform: translateY(-1px);
+}
+
+/* En touch, mejor no “levantar” (evita saltitos al tocar/scroll) */
+@media (hover: none) and (pointer: coarse) {
+  .card.hover-glow:hover,
+  .card.hover-glow:active,
+  .card.hover-glow:focus-within,
+  .card.hover-glow.is-tapped {
+    transform: none;
+  }
+}
+
+/* -----------------------------
+   5) Buttons
+------------------------------ */
+.btn-row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 650;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 237, 255, 0.22);
+}
+
+.btn-primary {
+  background: var(--c-orange);
+  color: #0a0a0a;
+  box-shadow: 0 10px 26px rgba(252, 61, 33, 0.18);
+}
+.btn-primary:hover {
+  box-shadow: 0 10px 26px rgba(252, 61, 33, 0.20), var(--glow-orange);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--c-cyan);
+  border-color: rgba(0, 237, 255, 0.40);
+}
+.btn-secondary:hover {
+  border-color: rgba(0, 237, 255, 0.60);
+  box-shadow: var(--glow-cyan);
+}
+
+/* -----------------------------
+   6) Form elements
+------------------------------ */
+label { display: block; font-size: 0.9rem; color: rgba(255,255,255,0.92); }
+.input, input[type="text"], input[type="search"], input[type="url"] {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(33,33,33,0.62);
+  color: var(--c-white);
+  font-family: var(--mono);
+  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+.input::placeholder, input::placeholder { color: rgba(204,204,204,0.65); font-family: var(--font); }
+.input:focus, input:focus {
+  outline: none;
+  border-color: rgba(0, 237, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 237, 255, 0.16);
+}
+
+/* -----------------------------
+   7) Badges / pills
+------------------------------ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  background: rgba(33,33,33,0.62);
+  color: rgba(255,255,255,0.92);
+}
+.badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(204,204,204,0.75);
+  box-shadow: 0 0 10px rgba(204,204,204,0.20);
+}
+.badge.active {
+  border-color: rgba(0, 237, 255, 0.35);
+}
+.badge.active::before {
+  background: var(--c-cyan);
+  box-shadow: 0 0 14px rgba(0, 237, 255, 0.28);
+}
+.badge.alert {
+  border-color: rgba(252, 61, 33, 0.40);
+}
+.badge.alert::before {
+  background: var(--c-orange);
+  box-shadow: 0 0 14px rgba(252, 61, 33, 0.22);
+}
+.badge.tech {
+  border-color: rgba(241, 255, 0, 0.35);
+}
+.badge.tech::before {
+  background: var(--c-yellow);
+  box-shadow: 0 0 14px rgba(241, 255, 0, 0.18);
+}
+
+/* -----------------------------
+   8) Record key-value table
+------------------------------ */
+.kv {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--r-8);
+  overflow: hidden;
+}
+.kv th, .kv td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  vertical-align: top;
+}
+.kv th {
+  width: 220px;
+  text-align: left;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(204,204,204,0.92);
+  background: rgba(33,33,33,0.50);
+}
+.kv td {
+  background: rgba(17,17,17,0.35);
+  color: rgba(255,255,255,0.95);
+}
+.kv tr:hover td { background: rgba(33,33,33,0.42); }
+
+/* -----------------------------
+   9) Footer
+------------------------------ */
+.site-footer {
+  padding: var(--space-7) 0;
+  color: rgba(204,204,204,0.85);
+  font-size: 0.9rem;
+}
+.site-footer a { color: var(--c-cyan); }
+
+/* -----------------------------
+   10) Utility
+------------------------------ */
+.section {
+  padding: var(--space-7) 0;
+}
+.h1 {
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2);
+}
+.h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+.lead {
+  color: rgba(204,204,204,0.92);
+  margin: 0;
+}
+.callout {
+  border-left: 3px solid rgba(0, 237, 255, 0.55);
+  padding: 10px 12px;
+  background: rgba(33,33,33,0.40);
+  border-radius: 10px;
+}
+
+/* -----------------------------
+   11) Print stylesheet (record page prints cleanly)
+   - white background
+   - hide sky map area
+   - keep table
+------------------------------ */
+@media print {
+  html { color-scheme: light; }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  body::before, body::after, .site-header, .nav, .btn-row { display: none !important; }
+  .card, .kv {
+    box-shadow: none !important;
+    border: 1px solid #cccccc !important;
+    background: transparent !important;
+  }
+  .card .card-hd, .kv th, .kv td {
+    background: transparent !important;
+    color: #000000 !important;
+  }
+  .muted, .lead, .kicker { color: #222222 !important; }
+
+  /* If your sky/map container has an id/class, add it here.
+     We’ll also add a recommended wrapper in the HTML edits below. */
+  .tsrc-hide-print { display: none !important; }
+}
+
+/* ==========================================================================
+   Home polish — “panel over nebula” (index.html)
+   ========================================================================== */
+
+.container-narrow{
+  width: min(880px, calc(100% - 2 * var(--space-6)));
+  margin: 0 auto;
+}
+
+/* More “photographic” nebula feel (still pure CSS, lightweight) */
+body.page-home::before{
+  background-image:
+    radial-gradient(1400px 900px at 50% 38%, rgba(11, 61, 145, 0.62), transparent 62%),
+    radial-gradient(900px 650px at 62% 54%, rgba(0, 237, 255, 0.10), transparent 60%),
+    radial-gradient(1100px 720px at 36% 70%, rgba(252, 61, 33, 0.07), transparent 62%),
+
+    /* star layers (tiled) */
+    radial-gradient(circle, rgba(255,255,255,0.80) 1px, transparent 1.6px),
+    radial-gradient(circle, rgba(255,255,255,0.50) 1px, transparent 1.6px),
+    radial-gradient(circle, rgba(255,255,255,0.28) 1px, transparent 1.4px),
+
+    linear-gradient(180deg, #05070a 0%, #0b0f16 55%, #05070a 100%);
+
+  background-size:
+    auto,
+    auto,
+    auto,
+    180px 180px,
+    120px 120px,
+    80px 80px,
+    auto;
+
+  background-position:
+    center,
+    center,
+    center,
+    0 0,
+    40px 60px,
+    20px 10px,
+    center;
+
+  opacity: 1;
+}
+
+/* Big centered glass “shell” like the reference */
+.hero-shell{
+  background: rgba(17, 17, 17, 0.36);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: clamp(18px, 3.2vw, 34px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 90px rgba(0,0,0,0.55);
+}
+
+/* Home typography: serif only for the hero title (offline-safe) */
+.page-home .kicker,
+.page-home .h1,
+.page-home .lead{
+  text-align: center;
+}
+
+.page-home .h1{
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Make cards feel “lighter glass” (less blocky) inside the shell */
+.page-home .card{
+  background: rgba(17,17,17,0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Input+button bar (single capsule) */
+.input-group{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(33,33,33,0.42);
+}
+
+.input-group .input{
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 10px 10px;
+  flex: 1;
+}
+
+.input-group .input:focus{
+  border: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px){
+  .input-group{ flex-direction: column; align-items: stretch; }
+  .input-group .btn{ width: 100%; justify-content: center; }
+}
+/* ===== Home “panel” layout (match reference) ===== */
+
+.home-stage{
+  padding-top: 48px;
+}
+
+.container-narrow{
+  width: min(860px, calc(100% - 2 * var(--space-6)));
+  margin: 0 auto;
+}
+
+/* Better “nebula panel” background (still CSS-only) */
+body.page-home::before{
+  background:
+    radial-gradient(1200px 820px at 50% 45%, rgba(11, 61, 145, 0.65), transparent 62%),
+    radial-gradient(900px 650px at 60% 60%, rgba(0, 237, 255, 0.10), transparent 60%),
+    radial-gradient(1100px 780px at 35% 75%, rgba(252, 61, 33, 0.07), transparent 62%),
+
+    radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.75) 50%, transparent 52%),
+    radial-gradient(1px 1px at 24% 70%, rgba(255,255,255,0.45) 50%, transparent 52%),
+    radial-gradient(1px 1px at 42% 36%, rgba(255,255,255,0.55) 50%, transparent 52%),
+    radial-gradient(1px 1px at 58% 64%, rgba(255,255,255,0.35) 50%, transparent 52%),
+    radial-gradient(1px 1px at 78% 44%, rgba(255,255,255,0.50) 50%, transparent 52%),
+    radial-gradient(1px 1px at 88% 78%, rgba(255,255,255,0.35) 50%, transparent 52%),
+
+    linear-gradient(180deg, #05070a 0%, #0b0f16 55%, #05070a 100%);
+}
+
+.hero-shell{
+  background: rgba(17, 17, 17, 0.34);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 14px;
+  padding: clamp(18px, 3.2vw, 34px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 90px rgba(0,0,0,0.55);
+}
+
+.page-home .kicker,
+.page-home .h1,
+.page-home .lead{
+  text-align: center;
+}
+
+.page-home .h1{
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-weight: 650;
+}
+
+.home-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(17,17,17,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.home-brand img{
+  height: 18px;
+  width: auto;
+  display:block;
+  opacity: 0.95;
+}
+
+.home-nav{
+  display:flex;
+  gap: 14px;
+  align-items:center;
+}
+
+.home-nav a{
+  color: rgba(255,255,255,0.92);
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.home-nav a:hover{
+  border-color: rgba(0,237,255,0.25);
+  box-shadow: 0 0 0 1px rgba(0,237,255,0.10);
+  text-decoration: none;
+}
+
+/* Input capsule like reference */
+.input-group{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(33,33,33,0.42);
+}
+.input-group .input{
+  border:none;
+  background:transparent;
+  box-shadow:none;
+  padding: 10px 10px;
+  flex:1;
+  font-family: var(--mono);
+}
+.input-group .input:focus{ outline:none; }
+
+.qr-line{
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+@media (max-width:640px){
+  .home-topbar{ flex-direction: column; align-items: stretch; }
+  .home-nav{ justify-content: center; flex-wrap: wrap; }
+  .input-group{ flex-direction: column; align-items: stretch; }
+  .input-group .btn{ width:100%; }
+}
+/* --- Home topbar brand sizing (fix oversized SVG) --- */
+.home-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(17,17,17,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.home-brand{ display:flex; align-items:center; gap: 10px; }
+
+.home-brand-img{
+  height: 18px;        /* <- controla el tamaño SIEMPRE */
+  max-height: 18px;
+  width: auto;
+  max-width: 260px;
+  display:block;
+  opacity: 0.96;
+}
+
+.home-nav{ display:flex; gap: 14px; align-items:center; }
+.home-nav a{
+  color: rgba(255,255,255,0.92);
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.home-nav a:hover{
+  border-color: rgba(0,237,255,0.25);
+  box-shadow: 0 0 0 1px rgba(0,237,255,0.10);
+  text-decoration: none;
+}
+
+@media (max-width: 640px){
+  .home-topbar{ flex-direction: column; align-items: stretch; }
+  .home-nav{ justify-content: center; flex-wrap: wrap; }
+}
+/* ===== Optional nebula image background (lightweight) ===== */
+
+/* 1) Default: no image (keeps current CSS nebula) */
+:root{
+  --tsrc-nebula: none; /* will be overridden per-page */
+}
+
+/* 2) Enable nebula image on home only */
+body.page-home{
+  --tsrc-nebula: url("/assets/bg/nebula.webp");
+}
+
+/* 3) Compose: image + gradients + stars (keeps it institutional) */
+body.page-home::before{
+  background:
+    /* Nebula image layer (subtle) */
+    var(--tsrc-nebula) center / cover no-repeat,
+
+    /* Color shaping + vignette */
+    radial-gradient(1200px 820px at 50% 45%, rgba(11, 61, 145, 0.55), transparent 62%),
+    radial-gradient(900px 650px at 60% 60%, rgba(0, 237, 255, 0.10), transparent 60%),
+    radial-gradient(1100px 780px at 35% 75%, rgba(252, 61, 33, 0.07), transparent 62%),
+
+    /* Minimal stars */
+    radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.70) 50%, transparent 52%),
+    radial-gradient(1px 1px at 24% 70%, rgba(255,255,255,0.40) 50%, transparent 52%),
+    radial-gradient(1px 1px at 42% 36%, rgba(255,255,255,0.50) 50%, transparent 52%),
+    radial-gradient(1px 1px at 58% 64%, rgba(255,255,255,0.30) 50%, transparent 52%),
+    radial-gradient(1px 1px at 78% 44%, rgba(255,255,255,0.45) 50%, transparent 52%),
+    radial-gradient(1px 1px at 88% 78%, rgba(255,255,255,0.30) 50%, transparent 52%),
+
+    /* Base */
+    linear-gradient(180deg, #05070a 0%, #0b0f16 55%, #05070a 100%);
+
+  /* Make the real photo present but not loud */
+  filter: saturate(0.95) contrast(1.02);
+  opacity: 0.95;
+}
+
+/* Optional: “focus” the image behind the central panel */
+body.page-home::before{
+  mask-image: radial-gradient(80% 65% at 50% 45%, rgba(0,0,0,1), rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.35) 100%);
+}
+
+body.page-home .site-header{
+  display: none;
+}
+
+/* como ya no hay header sticky, quitamos el espacio “reservado” arriba */
+body.page-home .home-stage{
+  padding-top: 24px; /* ajusta a gusto (0–48px) */
+}
+/* Home topbar brand: make it readable */
+.home-brand{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.home-mark{
+  width: 26px;
+  height: 26px;
+  display:block;
+  opacity: 0.95;
+  /* si el mark es oscuro, descomenta:
+  filter: brightness(0) invert(1);
+  */
+}
+
+.home-brand-text{
+  display:flex;
+  flex-direction:column;
+  line-height: 1.05;
+  min-width: 0;
+}
+
+.home-brand-text strong{
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  color: var(--star-white, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-brand-text span{
+  font-size: 0.78rem;
+  color: var(--nebula-silver, #cccccc);
+  opacity: 0.92;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px){
+  .home-brand-text strong{ font-size: 0.92rem; }
+  .home-mark{ width: 24px; height: 24px; }
+}
+
+/* ===== Home topbar wordmark sizing ===== */
+.home-brand-img{
+  height: 200px !important;      /* sube a 34 o 38 si lo quieres más grande */
+  width: auto !important;
+  max-height: 200px !important;
+  max-width: 420px !important;
+  display: block !important;
+  opacity: 0.96;
+}
+
+/* Mobile: reduce para que no empuje el menú */
+@media (max-width: 520px){
+  .home-brand-img{
+    height: 22px !important;
+    max-height: 22px !important;
+  }
+}
