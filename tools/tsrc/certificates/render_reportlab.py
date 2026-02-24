@@ -387,7 +387,9 @@ def _draw_kv_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_fon
     """
     Key/value block:
       - optional label line (small)
-      - value line (single-line with optional shrink-to-fit)
+      - value line(s):
+          - if wrap:true => wrap up to max_lines, then shrink by shrink_step_pt down to min_value_size_pt, then ellipsize last line
+          - else => single-line shrink-to-fit
     """
     label = str(b.get("label", "")).strip()
     key = str(b.get("key", "")).strip()
@@ -396,7 +398,7 @@ def _draw_kv_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_fon
     y = _to_pt(b.get("y", 150), ctx.units)
 
     label_size_pt = float(b.get("label_size", 8))   # pt
-    value_size_pt = float(b.get("value_size", 11))  # pt
+    value_size_pt0 = float(b.get("value_size", 11))  # pt
     gap_pt = float(b.get("gap", 2))                 # pt
 
     max_width = b.get("max_width", 0)
@@ -407,43 +409,82 @@ def _draw_kv_block(c: Canvas, ctx: RenderContext, b: Dict[str, Any], default_fon
 
     value = get_by_path(ctx.entry_dict, key) if key else ""
     value = str(value).strip()
-    # Optional quoting for motto (or any kv value)
-    if value:
-        if bool(b.get("quote", False)):
-            # Avoid double quoting if it already looks quoted
-            if not (value.startswith(("“", '"', "'")) and value.endswith(("”", '"', "'"))):
-                value = f"“{value}”"
+
+    # Optional quoting (motto)
+    if value and bool(b.get("quote", False)):
+        if not (value.startswith(("“", '"', "'")) and value.endswith(("”", '"', "'"))):
+            value = f"“{value}”"
+
+    # Optional formatting (recorded_at, etc.)
     fmt = str(b.get("format", "")).strip()
     if fmt:
         value = _format_value(value, fmt)
+
     if not value and not label:
         return
 
-    # Alignment (optional; backward-compatible defaults)
+    # Alignment
     label_align = str(b.get("label_align", b.get("align", "left"))).strip().lower()
     value_align = str(b.get("value_align", b.get("align", "left"))).strip().lower()
 
-    # Optional: hide label without deleting it from layout
+    # Optional: hide label
     show_label = bool(b.get("show_label", True))
+
+    # Wrap + shrink strategy (your “wrap then shrink then …” behavior)
+    wrap = bool(b.get("wrap", False))
+    max_lines = int(b.get("max_lines", 1)) if wrap else 1
+    value_leading_pt = float(b.get("value_leading", value_size_pt0 + 2))
+
+    shrink_on_overflow = bool(b.get("shrink_on_overflow", False))
+    shrink_step_pt = float(b.get("shrink_step_pt", 1))
+    min_value_size_pt = float(b.get("min_value_size_pt", 6))
 
     c.saveState()
 
+    # Label first (baseline at y)
     if show_label and label:
         c.setFont(label_font, label_size_pt)
         _draw_aligned_string(c, label, x, y, label_align)
-        y -= (label_size_pt + gap_pt)
+        y_value = y - (label_size_pt + gap_pt)
+    else:
+        y_value = y
 
-    c.setFont(value_font, value_size_pt)
+    if not value:
+        c.restoreState()
+        return
 
-    # Single-line shrink-to-fit for value
-    if value and max_width_pt and stringWidth(value, value_font, value_size_pt) > max_width_pt:
-        while value_size_pt > 6 and stringWidth(value, value_font, value_size_pt) > max_width_pt:
-            value_size_pt -= 0.25
-            c.setFont(value_font, value_size_pt)
+    if wrap:
+        # Use the existing paragraph engine:
+        # wrap -> shrink (by steps) -> ellipsis if still too long
+        final_size_pt, lines, final_leading = _layout_paragraph(
+            value,
+            font=value_font,
+            size_pt_start=value_size_pt0,
+            leading_pt=value_leading_pt,
+            max_width_pt=max_width_pt,
+            max_lines=max_lines,
+            shrink_on_overflow=shrink_on_overflow,
+            shrink_step_pt=shrink_step_pt,
+            min_size_pt=min_value_size_pt,
+        )
 
-    if value:
-        _draw_aligned_string(c, value, x, y, value_align)
+        c.setFont(value_font, final_size_pt)
+        for i, ln in enumerate(lines):
+            _draw_aligned_string(c, ln, x, y_value - i * final_leading, value_align)
 
+        c.restoreState()
+        return
+
+    # Single-line shrink-to-fit (old behavior)
+    size_pt = value_size_pt0
+    c.setFont(value_font, size_pt)
+
+    if max_width_pt and stringWidth(value, value_font, size_pt) > max_width_pt:
+        while size_pt > min_value_size_pt and stringWidth(value, value_font, size_pt) > max_width_pt:
+            size_pt -= 0.25
+            c.setFont(value_font, size_pt)
+
+    _draw_aligned_string(c, value, x, y_value, value_align)
     c.restoreState()
 
 
