@@ -786,3 +786,50 @@ body.page-home .site-header{
 body.page-home .home-stage{
   padding-top: 24px; /* ajusta a gusto (0–48px) */
 }
+/* Home topbar brand: make it readable */
+.home-brand{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.home-mark{
+  width: 26px;
+  height: 26px;
+  display:block;
+  opacity: 0.95;
+  /* si el mark es oscuro, descomenta:
+  filter: brightness(0) invert(1);
+  */
+}
+
+.home-brand-text{
+  display:flex;
+  flex-direction:column;
+  line-height: 1.05;
+  min-width: 0;
+}
+
+.home-brand-text strong{
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  color: var(--star-white, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-brand-text span{
+  font-size: 0.78rem;
+  color: var(--nebula-silver, #cccccc);
+  opacity: 0.92;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px){
+  .home-brand-text strong{ font-size: 0.92rem; }
+  .home-mark{ width: 24px; height: 24px; }
+}
