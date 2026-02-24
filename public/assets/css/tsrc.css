@@ -777,3 +777,12 @@ body.page-home::before{
 body.page-home::before{
   mask-image: radial-gradient(80% 65% at 50% 45%, rgba(0,0,0,1), rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.35) 100%);
 }
+
+body.page-home .site-header{
+  display: none;
+}
+
+/* como ya no hay header sticky, quitamos el espacio “reservado” arriba */
+body.page-home .home-stage{
+  padding-top: 24px; /* ajusta a gusto (0–48px) */
+}
