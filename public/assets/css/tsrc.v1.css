@@ -1062,3 +1062,31 @@ body.page-registry .map-frame{
     border-color:#ddd !important;
   }
 }
+
+/* =========================
+   Registry Logo
+   ========================= */
+
+.registry-header{
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.registry-brand{
+  display:flex;
+  justify-content:center;
+  margin-bottom: 12px;
+}
+
+.registry-logo{
+  height: 180px;       /* prueba 64–80 según gusto */
+  width: auto;
+  opacity: 0.95;
+}
+
+/* Slightly smaller on mobile */
+@media (max-width: 600px){
+  .registry-logo{
+    height: 100px;
+  }
+}
