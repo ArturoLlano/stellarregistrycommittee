@@ -38,7 +38,12 @@
 
 
     // Viewer params
-    const fov = toNum(p.get("fov"), 55);
+    // Viewer params: default FOV can differ on mobile
+    const fovParam = p.get("fov");
+    const isMobile = matchMedia("(max-width: 760px)").matches || ("ontouchstart" in window);
+    const fov = (fovParam !== null && fovParam !== "")
+      ? toNum(fovParam, 55)
+      : (isMobile ? 35 : 55);
     // const survey = p.get("survey") ?? "P/DSS2/color";
     const survey = p.get("survey") ?? "P/Mellinger/color";
 
