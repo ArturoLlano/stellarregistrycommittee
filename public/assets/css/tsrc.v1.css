@@ -836,9 +836,9 @@ body.page-home .home-stage{
 
 /* ===== Home topbar wordmark sizing ===== */
 .home-brand-img{
-  height: 150px !important;      /* sube a 34 o 38 si lo quieres más grande */
+  height: 180px !important;      /* sube a 34 o 38 si lo quieres más grande */
   width: auto !important;
-  max-height: 150px !important;
+  max-height: 180px !important;
   max-width: 420px !important;
   display: block !important;
   opacity: 0.96;
@@ -847,7 +847,7 @@ body.page-home .home-stage{
 /* Mobile: reduce para que no empuje el menú */
 @media (max-width: 520px){
   .home-brand-img{
-    height: 50px !important;
-    max-height: 50px !important;
+    height: 70px !important;
+    max-height: 70px !important;
   }
 }
