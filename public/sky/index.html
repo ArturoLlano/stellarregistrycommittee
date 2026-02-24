@@ -351,6 +351,42 @@ if (showStars) {
         }
 
         aladin.addCatalog(constCat);
+
+        // --- Auto-hide constellation names when FOV is very wide (>100°) ---
+        // Use the same mechanism as the "eye" toggle in the Layers UI.
+        const CONST_HIDE_FOV = 100;
+        let constIsHidden = false;
+        
+        function readFovDegForConst() {
+          const f = aladin.getFov(); // [xDeg, yDeg]
+          return Math.max(f?.[0] ?? 0, f?.[1] ?? 0);
+        }
+        
+        function setConstHidden(hidden) {
+          if (hidden === constIsHidden) return;
+          constIsHidden = hidden;
+        
+          try {
+            if (hidden) {
+              if (typeof constCat.hide === "function") constCat.hide();
+              else if (typeof constCat.setVisible === "function") constCat.setVisible(false);
+              else if (typeof constCat.setOpacity === "function") constCat.setOpacity(0);
+            } else {
+              if (typeof constCat.show === "function") constCat.show();
+              else if (typeof constCat.setVisible === "function") constCat.setVisible(true);
+              else if (typeof constCat.setOpacity === "function") constCat.setOpacity(1);
+            }
+          } catch (e) {
+            console.warn("Constellations auto hide/show failed:", e);
+          }
+        }
+        
+        (function tickConstHide() {
+          const fovNow = readFovDegForConst();
+          setConstHidden(fovNow > CONST_HIDE_FOV);
+          requestAnimationFrame(tickConstHide);
+        })();
+        
         // --- Auto-hide constellation names when FOV is very wide (>100°) ---
         // (Robusto: no depende de removeCatalog; vacía/recarga sources)
         const CONST_HIDE_FOV = 100; // >100° => hide labels
