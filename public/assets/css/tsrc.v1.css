@@ -443,6 +443,17 @@ body.page-home .site-header{ display:none; }
   .home-mark{ height: 22px; }
 }
 
+/* Home lookup: ensure spacing between input and button */
+body.page-home .btn-row{
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;              /* espacio entre input y botón */
+}
+
+body.page-home .btn-row .btn{
+  align-self: flex-start; /* botón no se estira a todo el ancho */
+}
+
 /* --------------------------------------------------------------------------
    8) REGISTRY page (/__app/registry.html rendered to /registry/<ID>)
 -------------------------------------------------------------------------- */
