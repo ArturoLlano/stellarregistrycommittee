@@ -1,0 +1,64 @@
+{
+  "id": "SAO-150442-VKXZ5DJ",
+  "status": "active",
+  "recorded_at_utc": "2026-02-24T21:09:04.986283Z",
+  "designation": {
+    "title": "Registry Entry — SAO 150442",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "150442"
+      }
+    ],
+    "inscription": {
+      "name": "K & J",
+      "motto": "Gracias por llegar a mi vida, con esta estrella es el recuerdo de nuestro amor."
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "05 25 59.818",
+      "dec_dms": "-19 41 43.87",
+      "ra_deg": 81.49924167,
+      "dec_deg": -19.69551944
+    },
+    "photometry": {
+      "v_mag": 5.8,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "F5",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Lep",
+      "name": "Lepus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Kevin",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 150442, with visual magnitude: 5.8, spectral type: F5, and located at the coordinates: RA: 05h 25m 59.82s, and Dec -19º 41' 43.87'', to be recorded in this registry as:"
+  }
+}
