@@ -150,6 +150,9 @@ body.page-registry::after{
   color: var(--c-silver);
   max-width: 80ch;
 }
+.muted{
+  color: rgba(255,255,255,.62);
+}
 
 /* --------------------------------------------------------------------------
    4) Glass surfaces + cards + hover glow
@@ -559,6 +562,72 @@ body.page-registry .map-frame{
   overflow: hidden;
   background: #000;
 }
+
+/* --- Map header / controls (registry) --- */
+body.page-registry .map-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+body.page-registry .map-meta{
+  color: rgba(255,255,255,.70);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+body.page-registry .map-sub{
+  color: var(--c-silver);
+  font-size: 13px;
+  margin-top: 2px;
+  max-width: 78ch;
+}
+
+/* Button used for "Show map" */
+body.page-registry .map-btn{
+  appearance: none;
+  border: 1px solid rgba(0,237,255,.36);
+  background: rgba(17,17,17,.35);
+  color: var(--c-white);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+body.page-registry .map-btn:hover{
+  border-color: rgba(0,237,255,.55);
+  box-shadow: 0 0 0 1px rgba(0,237,255,.18);
+  transform: translateY(-1px);
+}
+body.page-registry .map-btn:active{ transform: translateY(0); }
+
+/* FIX: "View large sky map" had inline white background; force readable theme */
+body.page-registry #btnOpenMapLarge{
+  appearance: none !important;
+  font: inherit !important;
+  font-weight: 600 !important;
+
+  padding: 10px 14px !important;
+  border-radius: 999px !important;
+
+  border: 1px solid rgba(0,237,255,.36) !important;
+  background: rgba(17,17,17,.35) !important;
+  color: var(--c-white) !important;
+
+  cursor: pointer !important;
+  transition: transform .15s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+body.page-registry #btnOpenMapLarge:hover{
+  border-color: rgba(0,237,255,.55) !important;
+  box-shadow: 0 0 0 1px rgba(0,237,255,.18) !important;
+  transform: translateY(-1px);
+}
+body.page-registry #btnOpenMapLarge:active{ transform: translateY(0); }
 
 /* --------------------------------------------------------------------------
    9) Print (registry prints cleanly)
