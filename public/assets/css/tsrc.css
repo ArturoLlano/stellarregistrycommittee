@@ -836,9 +836,9 @@ body.page-home .home-stage{
 
 /* ===== Home topbar wordmark sizing ===== */
 .home-brand-img{
-  height: 150px !important;      /* sube a 34 o 38 si lo quieres más grande */
+  height: 200px !important;      /* sube a 34 o 38 si lo quieres más grande */
   width: auto !important;
-  max-height: 150px !important;
+  max-height: 200px !important;
   max-width: 420px !important;
   display: block !important;
   opacity: 0.96;
