@@ -443,15 +443,25 @@ body.page-home .site-header{ display:none; }
   .home-mark{ height: 22px; }
 }
 
-/* Home lookup: ensure spacing between input and button */
-body.page-home .btn-row{
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;              /* espacio entre input y botón */
+/* Desktop: inline input + button, with gap */
+@media (min-width: 721px){
+  body.page-home .btn-row{
+    display:flex;
+    gap: 12px;
+    align-items: center;
+  }
+  body.page-home .btn-row .input{ flex: 1 1 auto; }
+  body.page-home .btn-row .btn{ flex: 0 0 auto; }
 }
 
-body.page-home .btn-row .btn{
-  align-self: flex-start; /* botón no se estira a todo el ancho */
+/* Mobile: stack */
+@media (max-width: 720px){
+  body.page-home .btn-row{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  body.page-home .btn-row .btn{ align-self: flex-start; }
 }
 
 /* --------------------------------------------------------------------------
