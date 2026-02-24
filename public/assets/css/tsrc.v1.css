@@ -1089,3 +1089,54 @@ body.page-registry .map-frame{
     height: 48px;
   }
 }
+
+/* ===== Registry header: logo left of title ===== */
+body.page-registry .registry-header{
+  text-align: left; /* override any old centering */
+}
+
+body.page-registry .registry-head{
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+body.page-registry .registry-brand{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0; /* override old margin-bottom */
+}
+
+body.page-registry .registry-logo{
+  height: 56px;  /* 48–72 a gusto */
+  width: auto;
+  opacity: 0.95;
+}
+
+body.page-registry .registry-head-text{
+  min-width: 0;
+}
+
+body.page-registry .registry-head-meta{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+body.page-registry .registry-head-meta .lede{
+  margin: 0; /* avoid extra vertical spacing in row */
+}
+
+/* Mobile: stack neatly */
+@media (max-width: 720px){
+  body.page-registry .registry-head{
+    align-items: flex-start;
+  }
+  body.page-registry .registry-logo{
+    height: 44px;
+  }
+}
