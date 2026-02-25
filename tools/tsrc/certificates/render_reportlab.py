@@ -138,16 +138,11 @@ def _get_template_pagesize_pt(template: TemplateBundle, units: str) -> Tuple[flo
 
 def _merge_raw_entry_json_certificate_fields(entry_id: str, entry_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Merge nested certificate.* fields from the original entry JSON file into entry_dict["certificate"].
+    Merge fields that exist in the raw JSON but may be absent from Entry.to_dict().
 
-    Why:
-    - Entry model currently only includes template_id and qr_url, so fields like:
-        certificate.legend_en, certificate.lang
-      would otherwise be lost for rendering.
-
-    Graceful behavior:
-    - If file missing or unreadable: return entry_dict unchanged.
-    - If no certificate block in raw: unchanged.
+    Currently needed for:
+      - certificate.* (legend_en, lang, etc.)
+      - inscription.inscribed_on (date-only string stored under object.inscription.inscribed_on in raw JSON)
     """
     try:
         paths = get_paths()
@@ -156,16 +151,29 @@ def _merge_raw_entry_json_certificate_fields(entry_id: str, entry_dict: Dict[str
             return entry_dict
 
         raw = json.loads(p.read_text(encoding="utf-8"))
-        raw_cert = raw.get("certificate")
-        if not isinstance(raw_cert, dict):
-            return entry_dict
-
         out = dict(entry_dict)
-        out_cert = dict(out.get("certificate") or {})
-        for k, v in raw_cert.items():
-            if k not in out_cert:
-                out_cert[k] = v
-        out["certificate"] = out_cert
+
+        # 1) Merge certificate.*
+        raw_cert = raw.get("certificate")
+        if isinstance(raw_cert, dict):
+            out_cert = dict(out.get("certificate") or {})
+            for k, v in raw_cert.items():
+                if k not in out_cert:
+                    out_cert[k] = v
+            out["certificate"] = out_cert
+
+        # 2) Merge inscription.inscribed_on
+        raw_obj = raw.get("object") or {}
+        raw_ins = raw_obj.get("inscription") or {}
+        inscribed_on = raw_ins.get("inscribed_on")
+
+        if isinstance(inscribed_on, str) and inscribed_on.strip():
+            out_ins = dict(out.get("inscription") or {})
+            # Only fill it if missing/empty in the model-derived dict
+            if not str(out_ins.get("inscribed_on", "")).strip():
+                out_ins["inscribed_on"] = inscribed_on.strip()
+            out["inscription"] = out_ins
+
         return out
     except Exception:
         return entry_dict

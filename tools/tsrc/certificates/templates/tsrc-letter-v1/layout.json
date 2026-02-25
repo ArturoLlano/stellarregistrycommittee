@@ -83,7 +83,7 @@
 
     { "type": "kv", "label": "REGISTRY ID:", "key": "id", "x": 80, "y": 45, "label_size": 10, "value_size": 10, "value_font": "mono", "max_width": 85 },
 
-    { "type": "kv", "label": "Recorded this day:", "key": "recorded_at", "x": 43.45, "y": 26,
+    { "type": "kv", "label": "Recorded this day:", "key": "inscription.inscribed_on", "x": 43.45, "y": 26,
       "label_size": 12, "value_size": 14, "max_width": 85, "format": "date_long_en",
       "label_align": "center", "value_align": "center" },
 
