@@ -331,8 +331,16 @@
           ? entry.object.inscription
           : (entry.inscription || null);
 
-        setText("recorded_by", entry.recorded_by && entry.recorded_by.display);
-        setText("sponsor", entry.sponsor && entry.sponsor.display);
+        function displayName(v){
+          if(!v) return "";
+          if(typeof v === "string") return v;
+          if(typeof v === "object") return v.display || v.name || v.title || v.id || "";
+          return String(v);
+        }
+        
+        var prov = entry.provenance || {};
+        setText("recorded_by", displayName(prov.recorded_by || entry.recorded_by));
+        setText("sponsor",     displayName(prov.sponsor     || entry.sponsor));
 
         setText("inscription_name", ins && ins.name);
         setText("inscription_motto", ins && ins.motto);
@@ -348,7 +356,9 @@
         setText("dec_fmt", dec ? formatDecDms(dec) : "");
 
         // Constellation (optional)
-        var cons = entry && entry.object && entry.object.context && entry.object.context.constellation;
+        var cons = (entry && entry.object && entry.object.constellation)
+        || (entry && entry.object && entry.object.context && entry.object.context.constellation);
+          
         var rowCons = $("row-constellation");
         var fieldCons = $("field-constellation");
 
