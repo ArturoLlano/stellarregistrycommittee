@@ -9,6 +9,22 @@
   --err:#e74c3c;
 }
 
+/* Native form controls (including date picker) should use dark UI when available */
+html{ color-scheme: dark; }
+input, select, textarea, button{ color-scheme: dark; }
+
+/* Make the calendar icon visible on dark inputs (Chromium/WebKit) */
+input[type="date"]::-webkit-calendar-picker-indicator{
+  filter: invert(1);
+  opacity: .85;
+  cursor: pointer;
+}
+
+/* Optional: keep the typed date text consistent */
+input[type="date"]::-webkit-datetime-edit{
+  color: var(--text);
+}
+
 *{box-sizing:border-box}
 body{
   margin:0;
