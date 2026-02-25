@@ -52,8 +52,8 @@
 
         <!-- 4) Inscription date (prefill today, editable) -->
         <label>
-          <span>Inscription date <span class="req">*</span></span>
-          <input type="date" name="inscription_date" required
+          <span>Inscription date (mm/dd/yyyy)<span class="req">*</span></span>
+          <input type="date" name="inscription_date" id="inscription_date" required
                  value="{{ (form.inscription_date if form else '') }}" />
         </label>
 
@@ -80,7 +80,7 @@
     <script>
       (function () {
         // Prefill inscription_date with today's local date if empty
-        var d = document.querySelector('input[name="inscription_date"]');
+        var d = document.getElementById('inscription_date');
         if (d && !d.value) {
           var now = new Date();
           var yyyy = now.getFullYear();
@@ -92,6 +92,31 @@
         // Prefill recorded_by if empty
         var rb = document.querySelector('input[name="recorded_by"]');
         if (rb && !rb.value) rb.value = 'Arturo Llano';
+
+        // Open native date picker on focus/click (Chromium/Safari). Safe no-op elsewhere.
+        if (d) {
+          function openPicker(){
+            if (typeof d.showPicker === 'function') {
+              try { d.showPicker(); } catch (e) {}
+            }
+          }
+
+          // When user enters the field (click or Tab)
+          d.addEventListener('focus', function () {
+            setTimeout(openPicker, 0);
+          });
+
+          // Click anywhere in the field
+          d.addEventListener('click', openPicker);
+
+          // Keyboard-friendly
+          d.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openPicker();
+            }
+          });
+        }
       })();
     </script>
   </section>
