@@ -33,6 +33,7 @@
     const setHud = (t) => hud.textContent = t;
 
     const p = new URLSearchParams(location.search);
+    const idParam = p.get("id");
     const showHud = (p.get("hud") ?? "0") !== "0"; // default: OFF
     if (!showHud) hud.style.display = "none";
 
@@ -87,7 +88,40 @@
         showFullscreenControl: false,
         showShareControl: true
       });
+      
+      async function recenterFromId(id) {
+      try {
+        const url = `/data/entries/${encodeURIComponent(id)}.json?_ts=${Date.now()}`;
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) return;
+    
+        const entry = await r.json();
+    
+        // Soporta varias formas posibles del JSON
+        const ra =
+          (entry.coordinates && (entry.coordinates.ra_hms || entry.coordinates.ra)) ||
+          entry.ra_hms || entry.ra;
+    
+        const dec =
+          (entry.coordinates && (entry.coordinates.dec_dms || entry.coordinates.dec)) ||
+          entry.dec_dms || entry.dec;
+    
+        const raDeg = entry.coordinates && entry.coordinates.ra_deg;
+        const decDeg = entry.coordinates && entry.coordinates.dec_deg;
+    
+        let target = null;
+        if (ra && dec) target = `${ra} ${dec}`;
+        else if (typeof raDeg === "number" && typeof decDeg === "number") target = `${raDeg} ${decDeg}`;
+    
+        if (target) aladin.gotoObject(target);
+      } catch (e) {
+        // silencioso: si falla, se queda el default
+      }
+    }
+    
+    if (idParam) recenterFromId(idParam);
 
+      
      // --- Constellation lines overlay (HiPS) + auto-hide on tight FOV ---
       let constLines = null;
       const LINES_HIDE_FOV = 10;          // <= 10° -> hide
