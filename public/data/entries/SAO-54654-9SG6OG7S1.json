@@ -1,0 +1,65 @@
+{
+  "id": "SAO-54654-9SG6OG7S1",
+  "status": "active",
+  "recorded_at_utc": "2026-02-25T19:09:32.660363Z",
+  "designation": {
+    "title": "Registry Entry — SAO 54654",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "54654"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida",
+      "inscribed_on": "2026-02-14"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "01 23 37.454",
+      "dec_dms": "+34 14 44.73",
+      "ra_deg": 20.90605833,
+      "dec_deg": 34.24575833
+    },
+    "photometry": {
+      "v_mag": 6.3,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "G5",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "And",
+      "name": "Andromeda",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Kevin",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 54654, with visual magnitude: 6.3, spectral type: G5, and located at the coordinates: RA: 01h 23m 37.45s, and Dec +34º 14' 44.73'', to be recorded in this registry as:"
+  }
+}
