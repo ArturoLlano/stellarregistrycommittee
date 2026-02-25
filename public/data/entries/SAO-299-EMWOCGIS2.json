@@ -1,0 +1,65 @@
+{
+  "id": "SAO-299-EMWOCGIS2",
+  "status": "active",
+  "recorded_at_utc": "2026-02-25T17:26:30.408496Z",
+  "designation": {
+    "title": "Registry Entry — SAO 299",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "299"
+      }
+    ],
+    "inscription": {
+      "name": "Linda Mariana",
+      "motto": "Eres la luz de mi vida",
+      "inscribed_on": "2026-07-03"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "01 53 59.147",
+      "dec_dms": "+84 19 47.81",
+      "ra_deg": 28.49644583,
+      "dec_deg": 84.32994722
+    },
+    "photometry": {
+      "v_mag": 8.7,
+      "p_mag": 9.7,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Cep",
+      "name": "Cepheus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "arthur",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 299, with visual magnitude: 8.7, and located at the coordinates: RA: 01h 53m 59.15s, and Dec +84º 19' 47.81'', to be recorded in this registry as:"
+  }
+}
