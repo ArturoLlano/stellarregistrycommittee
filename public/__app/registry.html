@@ -94,6 +94,16 @@
           <div class="kv__v"><span id="dec_fmt">—</span></div>
         </div>
 
+        <div class="kv__row" id="row-vmag" style="display:none;">
+          <div class="kv__k">Visual magnitude (V)</div>
+          <div class="kv__v"><span id="v_mag">—</span></div>
+        </div>
+        
+        <div class="kv__row" id="row-spectral" style="display:none;">
+          <div class="kv__k">Spectral type</div>
+          <div class="kv__v"><span id="spectral_type">—</span></div>
+        </div>
+          
         <div class="kv__row" id="row-constellation" style="display:none;">
           <div class="kv__k">Constellation</div>
           <div class="kv__v" id="field-constellation">—</div>
@@ -254,6 +264,7 @@
     return;
   }
 
+        
   var label =
     (insName && String(insName).trim()) ? String(insName).trim()
     : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
@@ -355,6 +366,32 @@
         setText("ra_fmt", ra ? formatRaHms(ra) : "");
         setText("dec_fmt", dec ? formatDecDms(dec) : "");
 
+        // Photometry / spectral (optional)
+        var vmag = entry && entry.object && entry.object.photometry && entry.object.photometry.v_mag;
+        var spec = entry && entry.object && entry.object.spectral && entry.object.spectral.type;
+        var isComp = entry && entry.object && entry.object.spectral && entry.object.spectral.is_composite;
+        
+        var rowV = $("row-vmag");
+        if (rowV) {
+          if (vmag === 0 || vmag) {
+            setText("v_mag", vmag);
+            rowV.style.display = "";
+          } else {
+            rowV.style.display = "none";
+          }
+        }
+        
+        var rowS = $("row-spectral");
+        if (rowS) {
+          if (spec) {
+            setText("spectral_type", String(spec) + (isComp ? " (composite)" : ""));
+            rowS.style.display = "";
+          } else {
+            rowS.style.display = "none";
+          }
+        }
+
+          
         // Constellation (optional)
         var cons = (entry && entry.object && entry.object.constellation)
         || (entry && entry.object && entry.object.context && entry.object.context.constellation);
