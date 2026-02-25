@@ -56,7 +56,7 @@ def preview():
         "inscription_date": (request.form.get("inscription_date") or "").strip(),  # NEW
         "sponsor": (request.form.get("sponsor") or "").strip(),
         "recorded_by": (request.form.get("recorded_by") or "").strip(),
-        "do_lookup": (request.form.get("do_lookup") or "").strip(),  # "on" or ""
+        "do_lookup": "on",  # forced always on (no UI toggle)
     }
 
     sao = safe_int(form["sao"])
