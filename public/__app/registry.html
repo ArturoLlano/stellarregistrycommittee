@@ -146,31 +146,7 @@
             loading="lazy"
             referrerpolicy="no-referrer">
           </iframe>
-        <script>
-        (function () {
-          var frame = document.getElementById("tsrcSkyFrame");
-          if (!frame) return;
         
-          // Extrae el ID de /registry/<ID>
-          var m = location.pathname.match(/\/registry\/([^\/?#]+)/);
-          if (!m) return;
-          var id = m[1];
-        
-          // FOV simple: 35 móvil / 55 desktop (ajusta si quieres)
-          var isMobile = /Mobi|Android/i.test(navigator.userAgent);
-          var fov = isMobile ? 35 : 55;
-        
-          // _ts fuerza recarga real en Safari viejo/BFCache
-          var url =
-            "/sky/?" +
-            "embed=1" +
-            "&id=" + encodeURIComponent(id) +
-            "&fov=" + encodeURIComponent(String(fov)) +
-            "&_ts=" + Date.now();
-        
-          frame.src = url;
-        })();
-        </script>
           <div class="map-foot" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <button id="btnOpenMapLarge" type="button"
               style="padding:8px 10px; border-radius:10px; border:1px solid rgba(0,0,0,.12); background:#fff; cursor:pointer;">
@@ -250,7 +226,7 @@
     function enableMap(entry, insName, saoLabel){
   var btn = $("btnToggleMap");
   var wrap = $("mapWrap");
-  var frame = $("skyFrame");
+  var frame = $("tsrcSkyFrame");
   var btnLarge = $("btnOpenMapLarge");
 
   if(!btn || !wrap || !frame){
@@ -287,6 +263,7 @@
   var sao = saoLabel || ""; // ej. "SAO 12345"
 
   var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label, sao: sao, inscription: inscription });
+  url += "&_ts=" + Date.now();
   // var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
 
   // Set iframe src every time (safe)
