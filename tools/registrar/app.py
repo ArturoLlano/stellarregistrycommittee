@@ -17,6 +17,7 @@ from registrar.schema import build_entry_payload
 from registrar.util import iso_utc_now, safe_int
 from registrar.vizier import fetch_sao_metadata_best_effort
 
+from datetime import date
 
 # Ensure repo root is on sys.path so we can import tools.tsrc.* from this app,
 # even when running from tools/registrar/.venv.
@@ -35,8 +36,11 @@ app = create_app()
 
 @app.get("/")
 def index():
-    # Minimal prefill support (optional)
-    return render_template("index.html", error=None, form={})
+    form = {
+        "recorded_by": "Arturo Llano",
+        "inscription_date": date.today().isoformat(),  # YYYY-MM-DD
+    }
+    return render_template("index.html", error=None, form=form)
 
 
 @app.post("/preview")
@@ -49,9 +53,9 @@ def preview():
         "sao": (request.form.get("sao") or "").strip(),
         "inscription_name": (request.form.get("inscription_name") or "").strip(),
         "inscription_motto": (request.form.get("inscription_motto") or "").strip(),
-        "recorded_by": (request.form.get("recorded_by") or "").strip(),
+        "inscription_date": (request.form.get("inscription_date") or "").strip(),  # NEW
         "sponsor": (request.form.get("sponsor") or "").strip(),
-        # checkbox: if unchecked, it won't exist in POST => becomes ""
+        "recorded_by": (request.form.get("recorded_by") or "").strip(),
         "do_lookup": (request.form.get("do_lookup") or "").strip(),  # "on" or ""
     }
 
@@ -61,8 +65,21 @@ def preview():
     if not form["inscription_name"]:
         return render_template("index.html", error="Inscription name is required.", form=form), 400
 
+    if not form["inscription_date"]:
+        form["inscription_date"] = date.today().isoformat()
+
+    try:
+        date.fromisoformat(form["inscription_date"])
+    except Exception:
+        return render_template(
+            "index.html",
+            error="Inscription date must be in YYYY-MM-DD format.",
+            form=form,
+        ), 400
+
     # Duplicate detection
     dups = find_duplicates(ctx, sao)
+
     if dups:
         # Show a clear warning and refuse to proceed
         return render_template("index.html", error=None, form=form, duplicates=dups, sao=sao), 409
@@ -90,6 +107,7 @@ def preview():
             sao=sao,
             inscription_name=form["inscription_name"],
             inscription_motto=form["inscription_motto"] or None,
+            inscription_date=form["inscription_date"] or None,  # NEW
             recorded_by=form["recorded_by"] or None,
             sponsor=form["sponsor"] or None,
             recorded_at_utc=iso_utc_now(),

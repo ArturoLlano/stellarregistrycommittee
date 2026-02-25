@@ -29,34 +29,46 @@
 
     <form method="post" action="/preview" class="form">
       <div class="grid">
+        <!-- 1) SAO -->
         <label>
           <span>SAO number <span class="req">*</span></span>
           <input name="sao" inputmode="numeric" autocomplete="off" required
                  value="{{ (form.sao if form else '') }}" placeholder="e.g., 12346" />
         </label>
 
+        <!-- 2) Inscription name -->
         <label>
           <span>Inscription name <span class="req">*</span></span>
           <input name="inscription_name" required
                  value="{{ (form.inscription_name if form else '') }}" placeholder="e.g., Linda Mariana" />
         </label>
 
+        <!-- 3) Motto -->
         <label>
           <span>Inscription motto (optional)</span>
           <input name="inscription_motto"
                  value="{{ (form.inscription_motto if form else '') }}" placeholder="e.g., Luz de mi vida." />
         </label>
 
+        <!-- 4) Inscription date (prefill today, editable) -->
         <label>
-          <span>Recorded by (optional)</span>
-          <input name="recorded_by"
-                 value="{{ (form.recorded_by if form else '') }}" placeholder="e.g., Anonymous" />
+          <span>Inscription date <span class="req">*</span></span>
+          <input type="date" name="inscription_date" required
+                 value="{{ (form.inscription_date if form else '') }}" />
         </label>
 
+        <!-- 5) Sponsor -->
         <label>
           <span>Sponsor (optional)</span>
           <input name="sponsor"
                  value="{{ (form.sponsor if form else '') }}" placeholder="e.g., Organization / Person" />
+        </label>
+
+        <!-- 6) Recorded by (prefill Arturo Llano) -->
+        <label>
+          <span>Recorded by (optional)</span>
+          <input name="recorded_by"
+                 value="{{ (form.recorded_by if form else '') }}" placeholder="e.g., Arturo Llano" />
         </label>
       </div>
 
@@ -69,5 +81,23 @@
         <button type="submit" class="btn">Generate Preview</button>
       </div>
     </form>
+
+    <script>
+      (function () {
+        // Prefill inscription_date with today's local date if empty
+        var d = document.querySelector('input[name="inscription_date"]');
+        if (d && !d.value) {
+          var now = new Date();
+          var yyyy = now.getFullYear();
+          var mm = String(now.getMonth() + 1).padStart(2, '0');
+          var dd = String(now.getDate()).padStart(2, '0');
+          d.value = yyyy + '-' + mm + '-' + dd;
+        }
+
+        // Prefill recorded_by if empty
+        var rb = document.querySelector('input[name="recorded_by"]');
+        if (rb && !rb.value) rb.value = 'Arturo Llano';
+      })();
+    </script>
   </section>
 {% endblock %}

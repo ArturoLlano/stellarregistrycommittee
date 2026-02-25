@@ -149,11 +149,27 @@ def _build_legend_en(*, sao: int, obj: dict) -> str | None:
     # Join with commas exactly in the style you wrote
     return ", ".join(chunks[:-1]) + ", " + chunks[-1]
 
+def _normalize_iso_date(v: str | None) -> str | None:
+    if v is None:
+        return None
+    s = v.strip()
+    if not s:
+        return None
+    # Expect YYYY-MM-DD (HTML <input type="date"> sends this)
+    try:
+        from datetime import date
+        date.fromisoformat(s)
+        return s
+    except Exception:
+        return None
+
+
 def build_entry_payload(
     *,
     sao: int,
     inscription_name: str,
     inscription_motto: str | None,
+    inscription_date: str | None,          # NEW
     recorded_by: str | None,
     sponsor: str | None,
     recorded_at_utc: str,
@@ -163,10 +179,12 @@ def build_entry_payload(
     suffix = random_suffix(6, 10)
     entry_id = f"SAO-{sao}-{suffix}"
 
+    inscribed_on = _normalize_iso_date(inscription_date)
+
     payload: dict[str, Any] = {
         "id": entry_id,
         "status": "active",
-        "recorded_at_utc": recorded_at_utc,
+        "recorded_at_utc": recorded_at_utc,   # sigue siendo “momento real” del registro (UTC)
         "designation": {
             "title": f"Registry Entry — SAO {sao}",
             "type": "commemorative",
@@ -176,6 +194,7 @@ def build_entry_payload(
             "inscription": {
                 "name": inscription_name.strip(),
                 **({"motto": _normalize_motto(inscription_motto)} if _normalize_motto(inscription_motto) else {}),
+                **({"inscribed_on": inscribed_on} if inscribed_on else {}),  # NEW
             },
         },
         "legal": {"disclaimer_ref": "/legal/disclaimer/"},
@@ -269,5 +288,5 @@ def build_entry_payload(
     legend = _build_legend_en(sao=sao, obj=obj)
     if legend:
         payload["certificate"]["legend_en"] = legend
-        
+
     return payload
