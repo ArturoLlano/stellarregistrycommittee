@@ -1,0 +1,65 @@
+{
+  "id": "SAO-149299-W7TXRKL2",
+  "status": "active",
+  "recorded_at_utc": "2026-02-25T19:20:39.807623Z",
+  "designation": {
+    "title": "Registry Entry — SAO 149299",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "149299"
+      }
+    ],
+    "inscription": {
+      "name": "Psieris",
+      "motto": "La estrella del alma que ama, del amor que espera sin apagarse, y de dos corazones que, aun separados, siguen mirando el mismo cielo.",
+      "inscribed_on": "2026-02-14"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "03 59 30.033",
+      "dec_dms": "-12 34 27.51",
+      "ra_deg": 59.8751375,
+      "dec_deg": -12.57430833
+    },
+    "photometry": {
+      "v_mag": 5.9,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "G5",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Eri",
+      "name": "Eridanus",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Arturo Llano",
+    "sponsor": "Jorge",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 149299, with visual magnitude: 5.9, spectral type: G5, and located at the coordinates: RA: 03h 59m 30.03s, and Dec -12º 34' 27.51'', to be recorded in this registry as:"
+  }
+}
