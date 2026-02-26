@@ -44,7 +44,7 @@
     const = matchMedia("(max-width: 760px)").matches || ("ontouchstart" in window);
     const fov = (fovParam !== null && fovParam !== "")
       ? toNum(fovParam, 55)
-      : (isMobile ? 10 : 40);
+      : (isMobile ? 35 : 45);
     // const survey = p.get("survey") ?? "P/DSS2/color";
     const survey = p.get("survey") ?? "P/Mellinger/color";
 
