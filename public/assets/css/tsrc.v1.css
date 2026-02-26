@@ -682,39 +682,6 @@ body.page-registry #btnOpenMapLarge:active{ transform: translateY(0); }
 }
 
 /* --------------------------------------------------------------------------
-/* Alinea logo y título en la misma línea */
-.registry-head{
-  display: flex;
-  align-items: center;   /* <-- si prefieres alinear por arriba usa: flex-start */
-  gap: 16px;
-}
-
-/* Evita “descuadres” por baseline de imágenes */
-.registry-brand{
-  display: flex;
-  align-items: center;
-}
-.registry-logo{
-  display: block;
-}
-
-/* Quita márgenes que suelen empujar el texto */
-.registry-head-text .brand,
-.registry-head-text .h1{
-  margin: 0;
-  line-height: 1.15;
-}
-
-/* (Opcional) centra verticalmente el bloque de texto */
-.registry-head-text{
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-
-
-/* --------------------------------------------------------------------------
    9) Print (registry prints cleanly)
 -------------------------------------------------------------------------- */
 @media print{
