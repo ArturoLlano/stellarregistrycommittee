@@ -1,16 +1,17 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Registry Record — The Stellar Registry Committee</title>
-    <meta name="robots" content="noindex" />
-    
-    <link rel="stylesheet" href="/assets/css/tsrc.v1.css?v=3" />
-    <script defer src="/assets/js/tsrc-ui.js?v=1"></script>
-  </head>
-  <body class="page-registry">
-    <header class="registry-header">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registry Record — The Stellar Registry Committee</title>
+  <meta name="robots" content="noindex" />
+
+  <link rel="stylesheet" href="/assets/css/tsrc.v1.css?v=3" />
+  <script defer src="/assets/js/tsrc-ui.js?v=1"></script>
+</head>
+
+<body class="page-registry">
+  <header class="registry-header">
     <div class="registry-head">
       <div class="registry-brand">
         <img
@@ -19,17 +20,16 @@
           class="registry-logo"
         />
       </div>
-  
+
       <div class="registry-head-text">
         <div class="brand">THE STELLAR REGISTRY COMMITTEE</div>
         <h1 class="h1">Registry Record</h1>
 
         <div class="registry-head-meta">
-           <p class="lede" id="status_text">Current status:</p> 
+          <p class="lede" id="status_text">Current status:</p>
           <span class="badge" id="status_badge">active</span>
         </div>
-          
-  
+
         <p id="internalNotice" class="muted" style="display:none; margin:10px 0 0;">
           Internal renderer endpoint. Use <code>/registry/&lt;ID&gt;</code> or <code>/r/&lt;ID&gt;</code>.
         </p>
@@ -46,18 +46,18 @@
         </div>
 
         <div class="kv__row">
-          <div class="kv__k">Canonical URL</div>
-          <div class="kv__v"><code id="canonical_url">—</code></div>
-        </div>
-
-        <div class="kv__row">
-          <div class="kv__k">Designation</div>
-          <div class="kv__v" id="designation">—</div>
-        </div>
-
-        <div class="kv__row">
           <div class="kv__k">Inscribed name</div>
-          <div class="kv__v"><span id="inscription_name" class="value--inscribed">—</span></div>
+          <div class="kv__v">
+            <span
+              id="inscription_name"
+              class="value--inscribed"
+              role="button"
+              tabindex="0"
+              aria-label="Open sky map in a new tab"
+              title="Open sky map in a new tab"
+              style="cursor:pointer;"
+            >—</span>
+          </div>
         </div>
 
         <div class="kv__row">
@@ -69,13 +69,6 @@
           <div class="kv__k">Recorded at (UTC)</div>
           <div class="kv__v" id="recorded_at">—</div>
         </div>
-        
-        <!-- 
-        <div class="kv__row">
-          <div class="kv__k">Recorded by</div>
-          <div class="kv__v" id="recorded_by">—</div>
-        </div>
-        -->
 
         <div class="kv__row">
           <div class="kv__k">Recorded by</div>
@@ -101,12 +94,12 @@
           <div class="kv__k">Visual magnitude (V)</div>
           <div class="kv__v"><span id="v_mag">—</span></div>
         </div>
-        
+
         <div class="kv__row" id="row-spectral" style="display:none;">
           <div class="kv__k">Spectral type</div>
           <div class="kv__v"><span id="spectral_type">—</span></div>
         </div>
-          
+
         <div class="kv__row" id="row-constellation" style="display:none;">
           <div class="kv__k">Constellation</div>
           <div class="kv__v" id="field-constellation">—</div>
@@ -133,11 +126,12 @@
             <ul id="notes" style="margin:0; padding-left:18px;"></ul>
           </div>
         </div>
-      </div>
 
-      <div class="actions">
-        <button class="btn" type="button" id="btnCopy">Copy canonical link</button>
-        <button class="btn" type="button" id="btnPrint">Print record</button>
+        <!-- moved to bottom -->
+        <div class="kv__row">
+          <div class="kv__k">Canonical URL</div>
+          <div class="kv__v"><code id="canonical_url">—</code></div>
+        </div>
       </div>
 
       <!-- MAP BLOCK (embedded viewer) -->
@@ -159,7 +153,7 @@
             loading="lazy"
             referrerpolicy="no-referrer">
           </iframe>
-        
+
           <div class="map-foot" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <button id="btnOpenMapLarge" type="button"
               style="padding:8px 10px; border-radius:10px; border:1px solid rgba(0,0,0,.12); background:#fff; cursor:pointer;">
@@ -167,7 +161,6 @@
             </button>
             <span class="muted" style="font-size:12px;">Opens in a new tab.</span>
           </div>
-
         </div>
       </section>
 
@@ -193,7 +186,6 @@
 
     // --- Converters for sky iframe ---
     function hmsToDeg(hms){
-      // Accepts: "2 35 43.9" OR "2h 35m 43.9s" OR "2:35:43.9"
       var s = String(hms||"").trim()
         .replace(/h|m|s/gi," ")
         .replace(/:/g," ")
@@ -204,7 +196,6 @@
       return (h + (m/60) + (sec/3600)) * 15;
     }
     function dmsToDeg(dms){
-      // Accepts: "+68 22 6" OR "+68° 22′ 6″" OR "-10:30:00"
       var t = String(dms||"").trim();
       t = t.replace(/[′’]/g,"'").replace(/[″”]/g,'"');
       var sign = (t.charAt(0)==='-') ? -1 : 1;
@@ -219,90 +210,109 @@
       var deg = Math.abs(parts[0] || 0), min = parts[1] || 0, sec = parts[2] || 0;
       return sign * (deg + (min/60) + (sec/3600));
     }
+
     function buildSkyUrl(opts){
-      // opts: { raDeg, decDeg, starLabel }
       var q = new URLSearchParams();
       q.set("ra", String(opts.raDeg));
       q.set("dec", String(opts.decDeg));
       q.set("star", opts.starLabel || "Registry Star");
       q.set("sao", opts.sao || "");
       q.set("inscription", opts.inscription || "");
-
-      // sensible defaults
       q.set("fov", "55");
       q.set("mag", "12");
       q.set("survey", "P/Mellinger/color");
-      // If you later want toggles:
-      // q.set("lines","1"); q.set("stars","1"); q.set("const","1");
       return "/sky/?" + q.toString();
     }
+
     function enableMap(entry, insName, saoLabel){
-  var btn = $("btnToggleMap");
-  var wrap = $("mapWrap");
-  var frame = $("tsrcSkyFrame");
-  var btnLarge = $("btnOpenMapLarge");
+      var btn = $("btnToggleMap");
+      var wrap = $("mapWrap");
+      var frame = $("tsrcSkyFrame");
+      var btnLarge = $("btnOpenMapLarge");
+      var insEl = $("inscription_name");
 
-  if(!btn || !wrap || !frame){
-    console.warn("Map elements missing", { btn: !!btn, wrap: !!wrap, frame: !!frame });
-    return;
-  }
+      if(!btn || !wrap || !frame) return;
 
-  var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
-  var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
+      var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
+      var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
 
-  if(!raHms || !decDms){
-    btn.disabled = true;
-    btn.textContent = "Map unavailable";
-    wrap.style.display = "none";
-    return;
-  }
+      if(!raHms || !decDms){
+        btn.disabled = true;
+        btn.textContent = "Map unavailable";
+        wrap.style.display = "none";
+        if(insEl){
+          insEl.onclick = null;
+          insEl.onkeydown = null;
+          insEl.setAttribute("aria-disabled", "true");
+          insEl.style.cursor = "default";
+        }
+        return;
+      }
 
-  var raDeg = hmsToDeg(raHms);
-  var decDeg = dmsToDeg(decDms);
+      var raDeg = hmsToDeg(raHms);
+      var decDeg = dmsToDeg(decDms);
 
-  if(!isFinite(raDeg) || !isFinite(decDeg)){
-    btn.disabled = true;
-    btn.textContent = "Map unavailable";
-    wrap.style.display = "none";
-    return;
-  }
+      if(!isFinite(raDeg) || !isFinite(decDeg)){
+        btn.disabled = true;
+        btn.textContent = "Map unavailable";
+        wrap.style.display = "none";
+        if(insEl){
+          insEl.onclick = null;
+          insEl.onkeydown = null;
+          insEl.setAttribute("aria-disabled", "true");
+          insEl.style.cursor = "default";
+        }
+        return;
+      }
 
-        
-  var label =
-    (insName && String(insName).trim()) ? String(insName).trim()
-    : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
-    : "Registry Star";
-  
-  var inscription = (entry.object && entry.object.inscription && entry.object.inscription.motto) ? entry.object.inscription.motto : "";
-  var sao = saoLabel || ""; // ej. "SAO 12345"
+      var label =
+        (insName && String(insName).trim()) ? String(insName).trim()
+        : (saoLabel && String(saoLabel).trim()) ? String(saoLabel).trim()
+        : "Registry Star";
 
-  var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label, sao: sao, inscription: inscription });
-  url += "&_ts=" + Date.now();
-  // var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label });
+      var inscription = (entry.object && entry.object.inscription && entry.object.inscription.motto) ? entry.object.inscription.motto : "";
+      var sao = saoLabel || "";
 
-  // Set iframe src every time (safe)
-  frame.src = url;
+      var url = buildSkyUrl({ raDeg: raDeg, decDeg: decDeg, starLabel: label, sao: sao, inscription: inscription });
+      url += "&_ts=" + Date.now();
 
-  // Button: open large
-  if(btnLarge){
-    btnLarge.onclick = function(){
-      window.open(url, "_blank", "noopener");
-    };
-  }
+      frame.src = url;
 
-  // --- default state: OPEN ---
-  var isOpen = true;                 // <- cambia a false si lo quieres cerrado por defecto
-  wrap.style.display = isOpen ? "block" : "none";
-  btn.textContent = isOpen ? "Hide map" : "Show map";
+      function openLarge(){
+        window.open(url, "_blank", "noopener");
+      }
 
-  // Toggle
-  btn.onclick = function(){
-    var currentlyVisible = (wrap.style.display !== "none");
-    wrap.style.display = currentlyVisible ? "none" : "block";
-    btn.textContent = currentlyVisible ? "Show map" : "Hide map";
-  };
-}
+      // Button: open large
+      if(btnLarge){
+        btnLarge.onclick = openLarge;
+      }
 
+      // Inscribed name acts as a button: open large map
+      if(insEl){
+        insEl.setAttribute("aria-disabled", "false");
+        insEl.style.cursor = "pointer";
+        insEl.onclick = openLarge;
+        insEl.onkeydown = function(e){
+          var k = e.key || "";
+          if(k === "Enter" || k === " "){
+            e.preventDefault();
+            openLarge();
+          }
+        };
+      }
+
+      // --- default state: OPEN ---
+      var isOpen = true;
+      wrap.style.display = isOpen ? "block" : "none";
+      btn.textContent = isOpen ? "Hide map" : "Show map";
+
+      // Toggle
+      btn.onclick = function(){
+        var currentlyVisible = (wrap.style.display !== "none");
+        wrap.style.display = currentlyVisible ? "none" : "block";
+        btn.textContent = currentlyVisible ? "Show map" : "Hide map";
+      };
+    }
 
     // Show internal notice when someone visits /__app/* directly
     if (location.pathname.startsWith("/__app/")) {
@@ -312,7 +322,7 @@
 
     // Extract ID only from canonical route /registry/<ID>
     function getIdFromPath(){
-      var parts = location.pathname.split("/").filter(Boolean); // ["registry","<ID>"]
+      var parts = location.pathname.split("/").filter(Boolean);
       return (parts[0]==="registry" && parts[1]) ? parts[1] : "";
     }
 
@@ -320,8 +330,10 @@
     setText("record_id", id);
     setText("canonical_url", id ? (location.origin + "/registry/" + id) : "");
     setText("qr_path", id ? ("/r/" + id) : "");
+
     var qrl = $("qr_link");
     if (qrl && id) qrl.setAttribute("href", "/r/" + encodeURIComponent(id));
+
     setText("entry_path", id ? ("/data/entries/" + id + ".json") : "");
 
     if(!id){
@@ -337,9 +349,7 @@
         return r.json();
       })
       .then(function(entry){
-        // Basic fields
         $("status_badge").textContent = entry.status || "active";
-        setText("designation", entry.designation && entry.designation.title);
 
         var ins = (entry.object && entry.object.inscription)
           ? entry.object.inscription
@@ -351,7 +361,7 @@
           if(typeof v === "object") return v.display || v.name || v.title || v.id || "";
           return String(v);
         }
-        
+
         var prov = entry.provenance || {};
         setText("recorded_by", displayName(prov.recorded_by || entry.recorded_by));
         setText("sponsor",     displayName(prov.sponsor     || entry.sponsor));
@@ -373,7 +383,7 @@
         var vmag = entry && entry.object && entry.object.photometry && entry.object.photometry.v_mag;
         var spec = entry && entry.object && entry.object.spectral && entry.object.spectral.type;
         var isComp = entry && entry.object && entry.object.spectral && entry.object.spectral.is_composite;
-        
+
         var rowV = $("row-vmag");
         if (rowV) {
           if (vmag === 0 || vmag) {
@@ -383,7 +393,7 @@
             rowV.style.display = "none";
           }
         }
-        
+
         var rowS = $("row-spectral");
         if (rowS) {
           if (spec) {
@@ -394,11 +404,10 @@
           }
         }
 
-          
         // Constellation (optional)
         var cons = (entry && entry.object && entry.object.constellation)
-        || (entry && entry.object && entry.object.context && entry.object.context.constellation);
-          
+          || (entry && entry.object && entry.object.context && entry.object.context.constellation);
+
         var rowCons = $("row-constellation");
         var fieldCons = $("field-constellation");
 
@@ -442,32 +451,13 @@
           }
         }
 
-        // ✅ Enable map (uses ra/dec from entry + label from inscribed name)
+        // Enable map (uses ra/dec from entry + label from inscribed name)
         enableMap(entry, (ins && ins.name) ? ins.name : "", saoText);
       })
       .catch(function(){
         $("status_badge").textContent = "not found";
         $("status_text").textContent = "No data file exists for this record ID yet.";
       });
-
-    // Actions
-    var btnCopy = $("btnCopy");
-    if(btnCopy){
-      btnCopy.addEventListener("click", function(){
-        var canonical = location.origin + "/registry/" + encodeURIComponent(id);
-        navigator.clipboard.writeText(canonical).then(function(){
-          btnCopy.textContent = "Copied";
-          setTimeout(function(){ btnCopy.textContent = "Copy canonical link"; }, 1200);
-        }).catch(function(){
-          btnCopy.textContent = "Copy failed";
-          setTimeout(function(){ btnCopy.textContent = "Copy canonical link"; }, 1200);
-        });
-      });
-    }
-    var btnPrint = $("btnPrint");
-    if(btnPrint){
-      btnPrint.addEventListener("click", function(){ window.print(); });
-    }
   })();
   </script>
 </body>
