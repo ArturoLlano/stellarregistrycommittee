@@ -64,11 +64,12 @@
                  value="{{ (form.sponsor if form else '') }}" placeholder="e.g., Organization / Person" />
         </label>
 
-        <!-- 6) Recorded by (prefill Arturo Llano) -->
+        <!-- 6) Recorded by (default: TSRC Registry Office — Recording Clerk) -->
         <label>
           <span>Recorded by (optional)</span>
           <input name="recorded_by"
-                 value="{{ (form.recorded_by if form else '') }}" placeholder="e.g., Arturo Llano" />
+                 value="{{ (form.recorded_by if form else '') }}"
+                 placeholder="e.g., TSRC Registry Office — Recording Clerk" />
         </label>
       </div>
 
@@ -91,7 +92,7 @@
 
         // Prefill recorded_by if empty
         var rb = document.querySelector('input[name="recorded_by"]');
-        if (rb && !rb.value) rb.value = 'Arturo Llano';
+        if (rb && !rb.value) rb.value = 'TSRC Registry Office — Recording Clerk';
 
         // Open native date picker on focus/click (Chromium/Safari). Safe no-op elsewhere.
         if (d) {
