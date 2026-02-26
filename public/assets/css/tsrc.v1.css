@@ -521,7 +521,7 @@ body.page-registry .registry-head-meta{
 
 @media (max-width: 720px){
   body.page-registry .registry-head{ align-items:flex-start; }
-  body.page-registry .registry-logo{ height: 100px; }
+  body.page-registry .registry-logo{ height: 200px; }
 }
 
 /* KV table */
