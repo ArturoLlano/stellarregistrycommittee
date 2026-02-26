@@ -37,7 +37,7 @@ app = create_app()
 @app.get("/")
 def index():
     form = {
-        "recorded_by": "Arturo Llano",
+        "recorded_by": "Volopapilo",
         "inscription_date": date.today().isoformat(),  # YYYY-MM-DD
     }
     return render_template("index.html", error=None, form=form)
