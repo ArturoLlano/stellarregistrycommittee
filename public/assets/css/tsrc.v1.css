@@ -520,8 +520,15 @@ body.page-registry .registry-head-meta{
 }
 
 @media (max-width: 720px){
-  body.page-registry .registry-head{ align-items:flex-start; }
-  body.page-registry .registry-logo{ height: 200px; }
+  /* Keep the same visual alignment as desktop */
+  body.page-registry .registry-head{
+    align-items: center;   /* was flex-start */
+  }
+
+  /* Avoid amplifying the SVG's internal top padding */
+  body.page-registry .registry-logo{
+    height: 180px;         /* was 200px */
+  }
 }
 
 /* KV table */
