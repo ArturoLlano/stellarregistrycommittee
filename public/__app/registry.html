@@ -374,6 +374,15 @@
         setText("recorded_at", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
         setText("epoch", entry.object && entry.object.coordinates && entry.object.coordinates.epoch);
 
+        // Inscribed on (preferred), fallback to recorded_at_utc (formatted) if missing
+        var inscribedOn = ins && ins.inscribed_on;
+        if(inscribedOn){
+          setText("inscribed_on", inscribedOn);
+        } else {
+          var dt = entry.recorded_at_utc || "";
+          setText("inscribed_on", dt ? dt.replace("T"," ").replace("Z"," UTC") : "");
+        }
+        
         var ra = entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
         var dec = entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
 
