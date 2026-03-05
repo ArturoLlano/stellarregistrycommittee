@@ -83,13 +83,20 @@
     const CONST_CSV_URL = "/data/entries/maps/constellations.csv";
 
     if (!window.A) {
-      setHud("ERROR: No cargó Aladin Lite (aladin.js).");
-      return;
-    }
+  setHud("ERROR: No cargó Aladin (A no existe). Revisa que aladin.js cargue bien.");
+  return;
+}
 
-    A.init
-      .then(async () => {
-      const aladin = A.aladin("#aladin", {
+setHud("Aladin detectado — esperando A.init…");
+
+let aladin = null;
+
+A.init
+  .then(async () => {
+    setHud("A.init OK — creando vista…");
+
+    try {
+      aladin = A.aladin("#aladin", {
         target,
         fov,
         survey,
@@ -103,8 +110,51 @@
         showFullscreenControl: false,
         showShareControl: true
       });
-        .catch((err) => {
-    setHud("ERROR: Aladin init falló: " + (err?.message || String(err)));
+    } catch (err) {
+      console.error(err);
+      setHud("ERROR: A.aladin() falló: " + (err?.message || String(err)));
+      return;
+    }
+
+    setHud("Vista OK — continuando…");
+
+    // 👇 TODO lo que ya tienes después (recenterFromId, overlays, CSV, stars, etc.)
+    //     se queda igual, pero ahora usa la variable `aladin` definida arriba.
+
+    async function recenterFromId(id) {
+      try {
+        const url = `/data/entries/${encodeURIComponent(id)}.json?_ts=${Date.now()}`;
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) return;
+
+        const entry = await r.json();
+
+        const ra =
+          (entry.coordinates && (entry.coordinates.ra_hms || entry.coordinates.ra)) ||
+          entry.ra_hms || entry.ra;
+
+        const dec =
+          (entry.coordinates && (entry.coordinates.dec_dms || entry.coordinates.dec)) ||
+          entry.dec_dms || entry.dec;
+
+        const raDeg = entry.coordinates && entry.coordinates.ra_deg;
+        const decDeg = entry.coordinates && entry.coordinates.dec_deg;
+
+        let t = null;
+        if (ra && dec) t = `${ra} ${dec}`;
+        else if (typeof raDeg === "number" && typeof decDeg === "number") t = `${raDeg} ${decDeg}`;
+
+        if (t) aladin.gotoObject(t);
+      } catch (e) { /* silencioso */ }
+    }
+
+    if (idParam) recenterFromId(idParam);
+
+    // ... (aquí sigue TODO tu código tal como ya lo tienes)
+  })
+  .catch((err) => {
+    console.error(err);
+    setHud("ERROR: A.init falló: " + (err?.message || String(err)));
   });
       
       async function recenterFromId(id) {
