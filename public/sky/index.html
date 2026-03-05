@@ -26,8 +26,8 @@
   <div id="hud">Cargando…</div>
   <div id="aladin"></div>
   <!-- Aladin Lite v3 (CDS) -->
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
-
+  
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/3.3.0/aladin.js" charset="utf-8"></script>
 <script>
 (function () {
   ...
@@ -36,7 +36,16 @@
   (function () {
     const hud = document.getElementById("hud");
     const setHud = (t) => hud.textContent = t;
+    setHud("JS OK — iniciando…");
 
+    window.addEventListener("error", (e) => {
+      setHud("ERROR JS: " + (e.message || "error"));
+    });
+    
+    window.addEventListener("unhandledrejection", (e) => {
+      const msg = e?.reason?.message || String(e.reason || "promise rejected");
+      setHud("ERROR PROMISE: " + msg);
+    });
     const p = new URLSearchParams(location.search);
     const idParam = p.get("id");
     const showHud = (p.get("hud") ?? "0") !== "0"; // default: OFF
