@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
   <title>Sky</title>
 
-  <!-- Aladin Lite v3 (CDS) -->
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+  <!-- Aladin Lite v3 (CDS) 
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script> -->
 
   <style>
     html, body { margin:0; height:100%; background:#000; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
@@ -25,7 +25,13 @@
 <body>
   <div id="hud">Cargando…</div>
   <div id="aladin"></div>
+  <!-- Aladin Lite v3 (CDS) -->
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
 
+<script>
+(function () {
+  ...
+  
   <script>
   (function () {
     const hud = document.getElementById("hud");
@@ -68,11 +74,12 @@
     const CONST_CSV_URL = "/data/entries/maps/constellations.csv";
 
     if (!window.A) {
-      setHud("ERROR: No cargó Aladin Lite (aladin.js/aladin.css).");
+      setHud("ERROR: No cargó Aladin Lite (aladin.js).");
       return;
     }
 
-    A.init.then(async () => {
+    A.init
+      .then(async () => {
       const aladin = A.aladin("#aladin", {
         target,
         fov,
@@ -87,6 +94,9 @@
         showFullscreenControl: false,
         showShareControl: true
       });
+        .catch((err) => {
+    setHud("ERROR: Aladin init falló: " + (err?.message || String(err)));
+  });
       
       async function recenterFromId(id) {
       try {
