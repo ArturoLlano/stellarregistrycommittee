@@ -6,8 +6,7 @@
   <title>Sky</title>
 
   <style>
-    html, body { margin:0; height:100%; background:#000; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    html, body { margin:0; height:100%; background:#000; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     #aladin { position:absolute; inset:0; }
 
     #hud{
@@ -26,152 +25,570 @@
   <div id="hud">Cargando…</div>
   <div id="aladin"></div>
 
-  <!-- Aladin Lite v3 (CDS) — NO uses aladin.css (ya no existe) -->
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+  <!-- Aladin Lite v3 (CDS)
+       - NO uses aladin.css (ya no existe / da 404)
+       - pin a version to avoid "latest" breaking changes
+  -->
+  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/3.3.0/aladin.js" charset="utf-8"></script>
 
   <script>
-  (() => {
+  (function () {
     "use strict";
 
+    // ---------- HUD + error surfacing ----------
     const hud = document.getElementById("hud");
-    const setHud = (t) => { if (hud) hud.textContent = t; };
-
-    // Captura errores (si algo truena, lo verás en el HUD)
-    window.addEventListener("error", (e) => {
-      console.error(e);
-      setHud("ERROR JS: " + (e.message || "error"));
-    });
-    window.addEventListener("unhandledrejection", (e) => {
-      console.error(e.reason);
-      setHud("ERROR PROMISE: " + (e.reason?.message || String(e.reason || "promise rejected")));
-    });
+    const setHud = (t) => { if (hud) hud.textContent = String(t ?? ""); };
 
     const p = new URLSearchParams(location.search);
-
-    // HUD visible solo si ?hud=1 (para producción queda silencioso por default)
-    const showHud = (p.get("hud") ?? "0") !== "0";
+    const showHud = (p.get("hud") ?? "0") !== "0"; // default OFF
     if (!showHud && hud) hud.style.display = "none";
 
-    const toNum = (v, d) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : d;
-    };
+    // Show errors in console always; show on HUD only if enabled.
+    window.addEventListener("error", (e) => {
+      console.error(e);
+      if (showHud) setHud("ERROR JS: " + (e.message || "error"));
+    });
 
+    window.addEventListener("unhandledrejection", (e) => {
+      console.error(e.reason);
+      if (showHud) {
+        const msg = e?.reason?.message || String(e.reason || "promise rejected");
+        setHud("ERROR PROMISE: " + msg);
+      }
+    });
+
+    if (showHud) setHud("JS OK — iniciando…");
+
+    // ---------- small utils ----------
+    function toNum(v, fallback) {
+      if (v === null || v === undefined || v === "") return fallback;
+      const n = Number(String(v).trim());
+      return Number.isFinite(n) ? n : fallback;
+    }
+    function toInt(v, fallback) {
+      if (v === null || v === undefined || v === "") return fallback;
+      const n = parseInt(String(v).trim(), 10);
+      return Number.isFinite(n) ? n : fallback;
+    }
+    function clampInt(n, a, b) {
+      return Math.min(b, Math.max(a, n));
+    }
+
+    // ---------- params ----------
+    const idParam = p.get("id");
+
+    // FOV default: mobile tighter
+    const fovParam = p.get("fov");
     const isMobile = matchMedia("(max-width: 760px)").matches || ("ontouchstart" in window);
-    const fov = (p.get("fov") !== null && p.get("fov") !== "")
-      ? toNum(p.get("fov"), 40)
+    const fov = (fovParam !== null && fovParam !== "")
+      ? toNum(fovParam, 40)
       : (isMobile ? 15 : 40);
 
-    // Default “bonito” pero estable: puedes forzar DSS2 con ?survey=P/DSS2/color
+    // Survey default: use canonical CDS prefix (alias "P/Mellinger/color" can break)
     const survey = p.get("survey") ?? "CDS/P/Mellinger/color";
 
+    // Toggles
+    const showStars = (p.get("stars") ?? "1") !== "0";
+    const showConstLabels = (p.get("const") ?? "1") !== "0";
+    const showLines = (p.get("lines") ?? "1") !== "0";
+
+    // Density controls (optional global cap)
+    const magLimit = toNum(p.get("mag"), null);              // keep mag_v <= magLimit if provided
+    const maxStars = clampInt(toInt(p.get("max"), 2000), 1, 5000);
+
+    // Center: allow ?target=... OR ?ra=...&dec=... OR default Vega
     const raQ = p.get("ra");
     const decQ = p.get("dec");
     const target =
       p.get("target") ??
       ((raQ && decQ) ? `${raQ} ${decQ}` : "Vega");
 
-    const idParam = p.get("id");
+    // Data locations (relative URLs)
+    const STARS_CSV_URL = "/data/entries/maps/stars.csv";
+    const CONST_CSV_URL = "/data/entries/maps/constellations.csv";
 
-    // Helpers: convertir "03 11 42.317" -> grados
-    function raHmsToDeg(s) {
-      if (!s) return null;
-      const parts = String(s).trim().replace(/:/g, " ").split(/\s+/);
-      if (parts.length < 3) return null;
-      const h = Number(parts[0]), m = Number(parts[1]), sec = Number(parts[2]);
-      if (![h,m,sec].every(Number.isFinite)) return null;
-      return (h + (m/60) + (sec/3600)) * 15;
-    }
-
-    // Helpers: "+81 15 49.76" -> grados
-    function decDmsToDeg(s) {
-      if (!s) return null;
-      const txt = String(s).trim().replace(/:/g, " ");
-      const sign = txt.startsWith("-") ? -1 : 1;
-      const clean = txt.replace(/^[-+]/, "");
-      const parts = clean.split(/\s+/);
-      if (parts.length < 3) return null;
-      const d = Number(parts[0]), m = Number(parts[1]), sec = Number(parts[2]);
-      if (![d,m,sec].every(Number.isFinite)) return null;
-      return sign * (d + (m/60) + (sec/3600));
-    }
-
-    async function centerOnEntry(aladin, id) {
-      const url = `/data/entries/${encodeURIComponent(id)}.json?_ts=${Date.now()}`;
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error(`No se pudo cargar entry JSON (${r.status})`);
-
-      const entry = await r.json();
-
-      // soporta entry.object.coordinates.* (tu esquema) y entry.coordinates.* (por compat)
-      const coo = entry?.object?.coordinates || entry?.coordinates || {};
-      const ra_hms = coo.ra_hms || entry?.ra_hms || null;
-      const dec_dms = coo.dec_dms || entry?.dec_dms || null;
-
-      // si no hay grados, intentamos convertir de HMS/DMS
-      const ra_deg = (typeof coo.ra_deg === "number") ? coo.ra_deg : raHmsToDeg(ra_hms);
-      const dec_deg = (typeof coo.dec_deg === "number") ? coo.dec_deg : decDmsToDeg(dec_dms);
-
-      if (Number.isFinite(ra_deg) && Number.isFinite(dec_deg)) {
-        aladin.gotoRaDec(ra_deg, dec_deg);
-        // marcador simple
-        const cat = A.catalog({ name: "Record", color: "#ffffff", sourceSize: 14, onClick: "showPopup" });
-        aladin.addCatalog(cat);
-        cat.addSources([ A.source(ra_deg, dec_deg, { name: id }) ]);
-      } else if (ra_hms && dec_dms) {
-        aladin.gotoObject(`${ra_hms} ${dec_dms}`);
-      } else {
-        throw new Error("El entry no trae coordenadas utilizables (ra/dec).");
-      }
-    }
-
-    // Validación: ¿Aladin cargó?
+    // ---------- guard Aladin ----------
     if (!window.A || !A.init) {
-      setHud("ERROR: Aladin no cargó (A.init no existe). Revisa Network/Console.");
+      if (showHud) setHud("ERROR: Aladin no cargó (A.init no existe).");
       return;
     }
 
-    setHud("JS OK — esperando A.init…");
+    if (showHud) setHud("Aladin detectado — esperando A.init…");
 
-    // A.init es promise y puede fallar (ej. WebGL2). :contentReference[oaicite:1]{index=1}
-    const timeoutMs = 15000;
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout esperando A.init")), timeoutMs));
+    let aladin = null;
 
-    Promise.race([A.init, timeout])
-      .then(() => {
-        setHud("A.init OK — creando vista…");
+    // ---------- init ----------
+    A.init
+      .then(async () => {
+        if (showHud) setHud("A.init OK — creando vista…");
 
-        const aladin = A.aladin("#aladin", {
-          target,
-          fov,
-          survey,
-          cooFrame: "ICRS",
-          projection: "SIN",
-          showReticle: true,
-          showCooGrid: true,
-          showLayersControl: true,
-          showGotoControl: true,
-          showZoomControl: true,
-          showFullscreenControl: false,
-          showShareControl: true
-        });
+        try {
+          aladin = A.aladin("#aladin", {
+            target,
+            fov,
+            survey,
+            cooFrame: "ICRS",
+            projection: "SIN",
+            showReticle: true,
+            showCooGrid: true,
+            showLayersControl: true,
+            showGotoControl: true,
+            showZoomControl: true,
+            showFullscreenControl: false,
+            showShareControl: true
+          });
+        } catch (err) {
+          console.error(err);
+          if (showHud) setHud("ERROR: A.aladin() falló: " + (err?.message || String(err)));
+          return;
+        }
 
-        setHud(`READY — target=${target} fov=${fov} survey=${survey}`);
+        // ---------- recenter from /data/entries/<ID>.json ----------
+        async function recenterFromId(id) {
+          try {
+            const url = `/data/entries/${encodeURIComponent(id)}.json?_ts=${Date.now()}`;
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) return;
 
-        if (idParam) {
-          setHud(`Cargando entry ${idParam}…`);
-          centerOnEntry(aladin, idParam)
-            .then(() => setHud(`READY — centered on ${idParam}`))
-            .catch((err) => {
-              console.error(err);
-              setHud("ERROR entry: " + (err?.message || String(err)));
-            });
+            const entry = await r.json();
+
+            // Support new schema (entry.object.coordinates) + older (entry.coordinates) + fallback
+            const coo = entry?.object?.coordinates || entry?.coordinates || {};
+
+            const ra =
+              (coo && (coo.ra_hms || coo.ra)) ||
+              entry?.ra_hms || entry?.ra || null;
+
+            const dec =
+              (coo && (coo.dec_dms || coo.dec)) ||
+              entry?.dec_dms || entry?.dec || null;
+
+            const raDeg = (typeof coo.ra_deg === "number") ? coo.ra_deg : (typeof entry?.ra_deg === "number" ? entry.ra_deg : null);
+            const decDeg = (typeof coo.dec_deg === "number") ? coo.dec_deg : (typeof entry?.dec_deg === "number" ? entry.dec_deg : null);
+
+            let targetStr = null;
+            if (ra && dec) targetStr = `${ra} ${dec}`;
+            else if (Number.isFinite(raDeg) && Number.isFinite(decDeg)) targetStr = `${raDeg} ${decDeg}`;
+
+            if (targetStr) aladin.gotoObject(targetStr);
+          } catch (e) {
+            // silent
+          }
+        }
+
+        if (idParam) await recenterFromId(idParam);
+
+        // ---------- constellation lines overlay (HiPS) + auto-hide on tight FOV ----------
+        let constLines = null;
+        const LINES_HIDE_FOV = 10;     // <= 10° -> hide
+        const LINES_OPACITY_ON = 0.35;
+
+        if (showLines) {
+          try {
+            constLines = aladin.newImageSurvey("JAXA/P/CONSTELLATIONS/Image/Lines");
+            aladin.setOverlayImageLayer(constLines, "constellation-lines");
+
+            // set opacity (fallback alpha)
+            try { constLines.setOpacity(LINES_OPACITY_ON); }
+            catch (e) {
+              try { constLines.setAlpha(LINES_OPACITY_ON); } catch (_) {}
+            }
+          } catch (e) {
+            console.warn("Constellation lines overlay failed:", e);
+            constLines = null;
+          }
+        }
+
+        if (showLines && constLines && typeof aladin.getFov === "function") {
+          let linesHidden = false;
+
+          function setLinesHidden(hidden) {
+            if (hidden === linesHidden) return;
+            linesHidden = hidden;
+
+            const a = hidden ? 0 : LINES_OPACITY_ON;
+            try { constLines.setOpacity(a); }
+            catch (e) {
+              try { constLines.setAlpha(a); } catch (_) {}
+            }
+          }
+
+          function readFovDeg() {
+            const f = aladin.getFov(); // [xDeg, yDeg]
+            return Math.max((f && f[0]) || 0, (f && f[1]) || 0);
+          }
+
+          (function tickLines() {
+            const fovNow = readFovDeg();
+            setLinesHidden(fovNow <= LINES_HIDE_FOV);
+            requestAnimationFrame(tickLines);
+          })();
+        }
+
+        // ---------- featured star (from URL) ----------
+        // Use: ?ra=<deg>&dec=<deg>&star=Name&sao=...&inscription=...
+        const starName = (p.get("star") ?? "").trim();
+        const starRA = (raQ !== null) ? Number(raQ) : null;
+        const starDEC = (decQ !== null) ? Number(decQ) : null;
+
+        if (starName && Number.isFinite(starRA) && Number.isFinite(starDEC)) {
+          const featuredCat = A.catalog({
+            name: "Featured star",
+            shape: "circle",
+            sourceSize: 18,
+            color: "#ffd36a",
+            onClick: "showPopup",
+            displayLabel: true,
+            labelColumn: "name",
+            labelColor: "rgba(255,211,106,0.98)",
+            labelFont: "18px sans-serif"
+          });
+
+          const sao = (p.get("sao") ?? "").trim();
+          const inscription = (p.get("inscription") ?? "").trim();
+
+          featuredCat.addSources([
+            A.source(starRA, starDEC, {
+              name: starName,
+              sao: sao || undefined,
+              inscription: inscription || undefined
+            })
+          ]);
+
+          aladin.addCatalog(featuredCat);
+        }
+
+        // ---------- load CSV data ----------
+        const tasks = [];
+        if (showStars) tasks.push(loadCsv(STARS_CSV_URL).then(rows => ({ kind: "stars", rows })));
+        if (showConstLabels) tasks.push(loadCsv(CONST_CSV_URL).then(rows => ({ kind: "const", rows })));
+
+        let results = [];
+        try {
+          results = await Promise.all(tasks);
+        } catch (err) {
+          console.error(err);
+          if (showHud) setHud("ERROR: No pude cargar los CSV (revisa rutas en /data/entries/maps/).");
+          return;
+        }
+
+        // ---------- render stars (dynamic by FOV) + halo labels + font scale ----------
+        if (showStars) {
+          const starsRes = results.find(r => r.kind === "stars");
+          let allStars = normalizeStars(starsRes?.rows ?? []);
+
+          // Apply optional global constraints
+          if (magLimit !== null) {
+            allStars = allStars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= magLimit) : false);
+          }
+          // hard cap (safety)
+          allStars.sort((a, b) => (a.mag_v ?? 99) - (b.mag_v ?? 99));
+          if (allStars.length > maxStars) allStars = allStars.slice(0, maxStars);
+
+          // Rules by FOV (deg)
+          const STAR_RULES = [
+            { fovMin: 250, mag: 0.5, max: 10  },
+            { fovMin: 220, mag: 0.8, max: 55  },
+            { fovMin: 200, mag: 1.2, max: 60  },
+            { fovMin: 180, mag: 1.5, max: 70  },
+            { fovMin: 160, mag: 1.9, max: 80  },
+            { fovMin: 140, mag: 2.0, max: 90  },
+            { fovMin: 120, mag: 2.1, max: 100 },
+            { fovMin: 110, mag: 2.2, max: 110 },
+            { fovMin: 100, mag: 2.3, max: 120 },
+            { fovMin: 90,  mag: 2.4, max: 130 },
+            { fovMin: 80,  mag: 2.6, max: 140 },
+            { fovMin: 70,  mag: 2.8, max: 150 },
+            { fovMin: 60,  mag: 3.0, max: 160 },
+            { fovMin: 55,  mag: 3.1, max: 170 },
+            { fovMin: 50,  mag: 3.2, max: 180 },
+            { fovMin: 45,  mag: 3.3, max: 190 },
+            { fovMin: 40,  mag: 3.5, max: 200 },
+            { fovMin: 35,  mag: 3.7, max: 210 },
+            { fovMin: 30,  mag: 4.0, max: 220 },
+            { fovMin: 27,  mag: 4.2, max: 235 },
+            { fovMin: 24,  mag: 4.4, max: 250 },
+            { fovMin: 21,  mag: 4.6, max: 300 },
+            { fovMin: 18,  mag: 4.8, max: 500 },
+            { fovMin: 15,  mag: 5.0, max: 600 },
+            { fovMin: 13,  mag: 5.1, max: 750 },
+            { fovMin: 11,  mag: 5.2, max: 1000 },
+            { fovMin: 9,   mag: 5.4, max: 1200 },
+            { fovMin: 7,   mag: 5.6, max: 1500 },
+            { fovMin: 5,   mag: 5.8, max: 2000 },
+            { fovMin: 0,   mag: 6.0, max: 2000 }
+          ];
+
+          const STAR_LABEL_PX = 14;
+          const HALO_EXTRA_PX = 2;
+          const HALO_ALPHA = 0.85;
+
+          const starHaloCat = A.catalog({
+            name: "Stars-halo",
+            sourceSize: 0,
+            shape: "circle",
+            color: "rgba(0,0,0,0)",
+            displayLabel: true,
+            labelColumn: "name",
+            labelColor: `rgba(0,0,0,${HALO_ALPHA})`,
+            labelFont: `${STAR_LABEL_PX + HALO_EXTRA_PX}px sans-serif`,
+            onClick: "showPopup"
+          });
+
+          const starCat = A.catalog({
+            name: "Stars",
+            color: "#ffffff",
+            shape: "circle",
+            sourceSize: 14,
+            onClick: "showPopup",
+            displayLabel: true,
+            labelColumn: "name",
+            labelColor: "rgba(255,255,255,0.95)",
+            labelFont: `bold ${STAR_LABEL_PX}px sans-serif`
+          });
+
+          // IMPORTANT: halo first (under), then white (over)
+          aladin.addCatalog(starHaloCat);
+          aladin.addCatalog(starCat);
+
+          let currentSources = [];
+          let lastRuleKey = "";
+          let lastFov = -1;
+          let starFontScale = 1.0;
+
+          function pickRuleByFov(fovDeg) {
+            for (const r of STAR_RULES) {
+              if (fovDeg >= r.fovMin) return r;
+            }
+            return STAR_RULES[STAR_RULES.length - 1];
+          }
+
+          function applyFontScale(scale) {
+            const whitePx = Math.round(STAR_LABEL_PX * scale);
+            const haloPx  = Math.round((STAR_LABEL_PX + HALO_EXTRA_PX) * scale);
+
+            if (typeof starCat.setOptions === "function") {
+              starCat.setOptions({ labelFont: `bold ${whitePx}px sans-serif` });
+            }
+            if (typeof starHaloCat.setOptions === "function") {
+              starHaloCat.setOptions({ labelFont: `${haloPx}px sans-serif` });
+            }
+          }
+
+          function applyRule(rule) {
+            const mag = rule.mag;
+            const max = rule.max;
+
+            // clear previous (both catalogs)
+            for (const src of currentSources) {
+              try { starCat.remove(src); } catch (e) {}
+              try { starHaloCat.remove(src); } catch (e) {}
+            }
+            currentSources = [];
+
+            const filtered = allStars.filter(s => Number.isFinite(s.mag_v) ? (s.mag_v <= mag) : false);
+            const finalStars = filtered.slice(0, max);
+
+            const sources = finalStars.map(s =>
+              A.source(s.ra_deg, s.dec_deg, { name: s.name, mag_v: s.mag_v })
+            );
+
+            starHaloCat.addSources(sources);
+            starCat.addSources(sources);
+            currentSources = sources;
+
+            if (showHud) setHud(`OK — fov≈${Math.round(lastFov)}° — stars mag<=${mag}, max=${max}`);
+          }
+
+          function readFovDeg() {
+            if (typeof aladin.getFov !== "function") return 0;
+            const f = aladin.getFov(); // [xDeg, yDeg]
+            return Math.max((f && f[0]) || 0, (f && f[1]) || 0);
+          }
+
+          (function tickStars() {
+            const fovNow = readFovDeg();
+
+            // font scale: FOV < 3° => 1.5×
+            const desiredScale = (fovNow < 3) ? 1.5 : 1.0;
+            if (desiredScale !== starFontScale) {
+              starFontScale = desiredScale;
+              applyFontScale(starFontScale);
+            }
+
+            // rules: update when FOV changes meaningfully
+            if (Math.abs(fovNow - lastFov) > 0.25) {
+              lastFov = fovNow;
+              const rule = pickRuleByFov(fovNow);
+              const key = `${rule.fovMin}|${rule.mag}|${rule.max}`;
+              if (key !== lastRuleKey) {
+                lastRuleKey = key;
+                applyRule(rule);
+              }
+            }
+
+            requestAnimationFrame(tickStars);
+          })();
+
+          // init
+          lastFov = readFovDeg();
+          applyFontScale((lastFov < 3) ? 1.5 : 1.0);
+          applyRule(pickRuleByFov(lastFov));
+        }
+
+        // ---------- render constellation labels ----------
+        if (showConstLabels) {
+          const constRes = results.find(r => r.kind === "const");
+          const consts = normalizeConstellations(constRes?.rows ?? []);
+
+          const constCat = A.catalog({
+            name: "Constellations",
+            sourceSize: 0,
+            shape: "circle",
+            color: "rgba(0,0,0,0)",
+            displayLabel: true,
+            labelColumn: "name",
+            labelColor: "rgba(255,255,255,0.90)",
+            labelFont: "20px sans-serif",
+            onClick: "showPopup"
+          });
+
+          for (const c of consts) {
+            constCat.addSources([ A.source(c.ra_deg, c.dec_deg, { name: c.name }) ]);
+          }
+          aladin.addCatalog(constCat);
+
+          // Auto-hide constellation names when FOV is very wide
+          const CONST_HIDE_FOV = 200;
+          let constIsHidden = false;
+
+          function readFovDegForConst() {
+            if (typeof aladin.getFov !== "function") return 0;
+            const f = aladin.getFov();
+            return Math.max((f && f[0]) || 0, (f && f[1]) || 0);
+          }
+
+          function setConstHidden(hidden) {
+            if (hidden === constIsHidden) return;
+            constIsHidden = hidden;
+
+            try {
+              if (hidden) {
+                if (typeof constCat.hide === "function") constCat.hide();
+                else if (typeof constCat.setVisible === "function") constCat.setVisible(false);
+                else if (typeof constCat.setOpacity === "function") constCat.setOpacity(0);
+              } else {
+                if (typeof constCat.show === "function") constCat.show();
+                else if (typeof constCat.setVisible === "function") constCat.setVisible(true);
+                else if (typeof constCat.setOpacity === "function") constCat.setOpacity(1);
+              }
+            } catch (e) {
+              console.warn("Constellations auto hide/show failed:", e);
+            }
+          }
+
+          (function tickConstHide() {
+            const fovNow = readFovDegForConst();
+            setConstHidden(fovNow > CONST_HIDE_FOV);
+            requestAnimationFrame(tickConstHide);
+          })();
+        }
+
+        // ---------- final HUD summary ----------
+        if (showHud) {
+          const hudBits = [];
+          hudBits.push("OK");
+          hudBits.push(`fov=${fov}°`);
+          if (showLines) hudBits.push("lines=on");
+          if (showStars) hudBits.push(`stars=on${magLimit!==null ? ` (mag<=${magLimit})` : ""}, max=${maxStars}`);
+          if (showConstLabels) hudBits.push("const=on");
+          setHud(hudBits.join(" — "));
         }
       })
       .catch((err) => {
         console.error(err);
-        setHud("ERROR init: " + (err?.message || String(err)));
+        if (showHud) setHud("ERROR: A.init falló: " + (err?.message || String(err)));
       });
+
+    // ---------- CSV helpers ----------
+    async function loadCsv(url) {
+      const res = await fetch(url, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`CSV fetch failed: ${url} (${res.status})`);
+      const text = await res.text();
+      return parseCsv(text);
+    }
+
+    function parseCsv(text) {
+      const lines = text.replace(/\r/g, "").split("\n")
+        .filter(l => l.trim() && !l.trim().startsWith("#"));
+      if (!lines.length) return [];
+
+      const header = splitCsvLine(lines[0]).map(h => h.trim());
+      const rows = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCsvLine(lines[i]);
+        if (!cols.length) continue;
+
+        const obj = {};
+        for (let j = 0; j < header.length; j++) obj[header[j]] = (cols[j] ?? "").trim();
+        rows.push(obj);
+      }
+      return rows;
+    }
+
+    function splitCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (ch === '"') {
+          if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    // ---------- Normalizers ----------
+    function normalizeStars(rows) {
+      const out = [];
+      for (const r of rows) {
+        const name = (r.name ?? "").trim();
+        const ra_deg = toNum(r.ra_deg, NaN);
+        const dec_deg = toNum(r.dec_deg, NaN);
+        const mag_v = toNum(r.mag_v, NaN);
+
+        if (!name || !Number.isFinite(ra_deg) || !Number.isFinite(dec_deg)) continue;
+        out.push({ name, ra_deg, dec_deg, mag_v: Number.isFinite(mag_v) ? mag_v : null });
+      }
+      return out;
+    }
+
+    function normalizeConstellations(rows) {
+      const out = [];
+      for (const r of rows) {
+        const name = (r.name ?? "").trim();
+        const ra_deg = toNum(r.ra_deg, NaN);
+        const dec_deg = toNum(r.dec_deg, NaN);
+        if (!name || !Number.isFinite(ra_deg) || !Number.isFinite(dec_deg)) continue;
+        out.push({ name, ra_deg, dec_deg });
+      }
+      return out;
+    }
 
   })();
   </script>
