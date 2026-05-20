@@ -1,0 +1,66 @@
+{
+  "id": "SAO-81142-TXLCTU4",
+  "status": "active",
+  "recorded_at_utc": "2026-05-20T15:41:31.150819Z",
+  "designation": {
+    "title": "Registry Entry — SAO 81142",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "81142"
+      }
+    ],
+    "inscription": {
+      "name": "Ayabba Irawo",
+      "motto": "Que esta estrella que lleva tu nombre te ilumine y guíe por siempre",
+      "inscribed_on": "2015-08-12"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "10 01 04.147",
+      "dec_dms": "+21 34 43.84",
+      "ra_deg": 150.26727917,
+      "dec_deg": 21.57884444
+    },
+    "photometry": {
+      "v_mag": 9.1,
+      "p_mag": 9.9,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "K0",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Leo",
+      "name": "Leo",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Volopapilo",
+    "sponsor": ".",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 81142, with visual magnitude: 9.1, spectral type: K0, and located at the coordinates: RA: 10h 01m 4.15s, and Dec +21º 34' 43.84'', to be recorded in this registry as:"
+  }
+}
