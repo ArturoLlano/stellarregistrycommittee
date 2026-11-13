@@ -163,6 +163,12 @@
             showFullscreenControl: false,
             showShareControl: false
           });
+          if (survey === "https://skies.esac.esa.int/DSSColor") {
+            // Lift faint stars and Milky Way detail in the temporary DSS background.
+            const background = aladin.getBaseImageLayer();
+            background.setGamma(0.65);
+            background.setBrightness(0.03);
+          }
         } catch (err) {
           console.error(err);
           setHud("ERROR: A.aladin() falló: " + (err?.message || String(err)));
