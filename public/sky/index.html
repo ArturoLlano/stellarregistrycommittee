@@ -29,7 +29,7 @@
        - NO uses aladin.css (ya no existe / da 404)
        - pin a version to avoid "latest" breaking changes
   -->
-  <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/3.3.0/aladin.js" charset="utf-8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aladin-lite@3.3.0/dist/aladin.umd.cjs" charset="utf-8"></script>
 
   <script>
   (function () {
@@ -37,7 +37,14 @@
 
     // ---------- HUD + error surfacing ----------
     const hud = document.getElementById("hud");
-    const setHud = (t) => { if (hud) hud.textContent = String(t ?? ""); };
+    const setHud = (t) => {
+      if (!hud) return;
+      hud.textContent = String(t ?? "");
+      if (hud.textContent.startsWith("ERROR")) {
+        hud.style.display = "block";
+        hud.setAttribute("role", "alert");
+      }
+    };
 
     const p = new URLSearchParams(location.search);
     const showHud = (p.get("hud") ?? "0") !== "0"; // default OFF
@@ -46,15 +53,13 @@
     // Show errors in console always; show on HUD only if enabled.
     window.addEventListener("error", (e) => {
       console.error(e);
-      if (showHud) setHud("ERROR JS: " + (e.message || "error"));
+      setHud("ERROR JS: " + (e.message || "error"));
     });
 
     window.addEventListener("unhandledrejection", (e) => {
       console.error(e.reason);
-      if (showHud) {
-        const msg = e?.reason?.message || String(e.reason || "promise rejected");
-        setHud("ERROR PROMISE: " + msg);
-      }
+      const msg = e?.reason?.message || String(e.reason || "promise rejected");
+      setHud("ERROR PROMISE: " + msg);
     });
 
     if (showHud) setHud("JS OK — iniciando…");
@@ -84,8 +89,11 @@
       ? toNum(fovParam, 40)
       : (isMobile ? 15 : 40);
 
-    // Survey default: use canonical CDS prefix (alias "P/Mellinger/color" can break)
-    const survey = p.get("survey") ?? "CDS/P/Mellinger/color";
+    // Use a direct ESA HiPS mirror; avoid the unavailable CDS survey registry.
+    const requestedSurvey = p.get("survey");
+    const survey = (!requestedSurvey || ["P/Mellinger/color", "CDS/P/Mellinger/color"].includes(requestedSurvey))
+      ? "https://skies.esac.esa.int/DSSColor"
+      : requestedSurvey;
 
     // Toggles
     const showStars = (p.get("stars") ?? "1") !== "0";
@@ -101,7 +109,7 @@
     const decQ = p.get("dec");
     const target =
       p.get("target") ??
-      ((raQ && decQ) ? `${raQ} ${decQ}` : "Vega");
+      ((raQ && decQ) ? `${raQ} ${decQ}` : "279.23473479 38.78368896");
 
     // Data locations (relative URLs)
     const STARS_CSV_URL = "/data/entries/maps/stars.csv";
@@ -109,7 +117,7 @@
 
     // ---------- guard Aladin ----------
     if (!window.A || !A.init) {
-      if (showHud) setHud("ERROR: Aladin no cargó (A.init no existe).");
+      setHud("ERROR: Aladin no cargó (A.init no existe).");
       return;
     }
 
@@ -139,7 +147,7 @@
           });
         } catch (err) {
           console.error(err);
-          if (showHud) setHud("ERROR: A.aladin() falló: " + (err?.message || String(err)));
+          setHud("ERROR: A.aladin() falló: " + (err?.message || String(err)));
           return;
         }
 
@@ -268,7 +276,7 @@
           results = await Promise.all(tasks);
         } catch (err) {
           console.error(err);
-          if (showHud) setHud("ERROR: No pude cargar los CSV (revisa rutas en /data/entries/maps/).");
+          setHud("ERROR: No pude cargar los CSV (revisa rutas en /data/entries/maps/).");
           return;
         }
 
@@ -507,7 +515,7 @@
       })
       .catch((err) => {
         console.error(err);
-        if (showHud) setHud("ERROR: A.init falló: " + (err?.message || String(err)));
+        setHud("ERROR: A.init falló: " + (err?.message || String(err)));
       });
 
     // ---------- CSV helpers ----------

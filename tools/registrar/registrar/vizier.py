@@ -5,9 +5,7 @@ import re
 import requests
 
 
-from typing import Tuple
 import os
-import requests
 
 # ---------- Normalization helpers ----------
 
@@ -141,7 +139,23 @@ HD_MULT_MEANING: dict[int, str] = {
 # ---------- Main lookup ----------
 
 def fetch_sao_metadata_best_effort(sao: int) -> Tuple[dict[str, Any] | None, str | None]:
-    base = "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    override = (os.environ.get("TSRC_VIZIER_ASU_TSV_BASE") or "").strip()
+    bases = [
+        override,
+        "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
+        "https://vizier.idia.ac.za/viz-bin/asu-tsv",
+        "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+    ]
+    errors = []
+    for base in dict.fromkeys(base for base in bases if base):
+        metadata, error = _fetch_sao_metadata_from_base(sao, base)
+        if metadata is not None:
+            return metadata, None
+        errors.append(f"{base}: {error}")
+    return None, "SAO lookup failed on all mirrors. " + " | ".join(errors)
+
+
+def _fetch_sao_metadata_from_base(sao: int, base: str) -> Tuple[dict[str, Any] | None, str | None]:
     params = {
         "-source": "I/131A",
         "SAO": str(sao),
@@ -188,7 +202,16 @@ def fetch_sao_metadata_best_effort(sao: int) -> Tuple[dict[str, Any] | None, str
         de_raw = _clean_str(parts[idx_de])
         if not ra_raw or not de_raw:
             continue
-        if _norm_key(ra_raw) == "HMS" and _norm_key(de_raw) == "DMS":
+        # TSV responses include unit and separator rows before the star.
+        # Only accept a row whose coordinate cells contain actual numbers.
+        try:
+            if _is_float(ra_raw) and _is_float(de_raw):
+                ra_value, de_value = float(ra_raw), float(de_raw)
+            else:
+                ra_value, de_value = _hms_to_deg(ra_raw), _dms_to_deg(de_raw)
+            if not (0 <= ra_value < 360 and -90 <= de_value <= 90):
+                continue
+        except ValueError:
             continue
         row = parts
         break
