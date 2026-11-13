@@ -1,0 +1,65 @@
+{
+  "id": "SAO-105768-DH1JU3N",
+  "status": "active",
+  "recorded_at_utc": "2026-11-13T16:09:17.073276Z",
+  "designation": {
+    "title": "Registry Entry — SAO 105768",
+    "type": "commemorative"
+  },
+  "object": {
+    "catalog": [
+      {
+        "scheme": "SAO",
+        "id": "105768"
+      }
+    ],
+    "inscription": {
+      "name": "LeiyEdu, una eternidad",
+      "motto": "De todas las estrellas del universo, mi destino siempre será encontrarte a ti. Y si volviera a nacer, volvería a elegirte.",
+      "inscribed_on": "2026-11-13"
+    },
+    "coordinates": {
+      "epoch": "J2000",
+      "ra_hms": "20 09 34.373",
+      "dec_dms": "+18 46 56.32",
+      "ra_deg": 302.39322083,
+      "dec_deg": 18.78231111
+    },
+    "photometry": {
+      "v_mag": 7.7,
+      "source": "I/131A"
+    },
+    "spectral": {
+      "type": "A2",
+      "is_composite": false,
+      "source": "I/131A"
+    },
+    "constellation": {
+      "iau_abbr": "Sge",
+      "name": "Sagitta",
+      "method": "IAU Delporte boundaries (via astropy)"
+    }
+  },
+  "legal": {
+    "disclaimer_ref": "/legal/disclaimer/"
+  },
+  "notes": [
+    "Coordinates and metadata retrieved from CDS VizieR: SAO Star Catalog J2000 (I/131A)."
+  ],
+  "provenance": {
+    "recorded_by": "Volopapilo",
+    "sponsor": ".",
+    "sources": [
+      {
+        "service": "CDS VizieR",
+        "catalog": "I/131A",
+        "table": "sao"
+      }
+    ]
+  },
+  "certificate": {
+    "template_id": "tsrc-letter-v1",
+    "lang": "en",
+    "legend_en": "This is to register the star designated: SAO 105768, with visual magnitude: 7.7, spectral type: A2, and located at the coordinates: RA: 20h 09m 34.37s, and Dec +18º 46' 56.32'', to be recorded in this registry as:"
+  }
+}
