@@ -148,6 +148,8 @@
 
         try {
           aladin = A.aladin("#aladin", {
+            // The optional CDS usage logger is unavailable and opens alert dialogs.
+            log: false,
             target,
             fov,
             survey,
