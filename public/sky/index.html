@@ -29,7 +29,7 @@
        - NO uses aladin.css (ya no existe / da 404)
        - pin a version to avoid "latest" breaking changes
   -->
-  <script src="https://cdn.jsdelivr.net/npm/aladin-lite@3.3.0/dist/aladin.umd.cjs" charset="utf-8"></script>
+  <script src="/assets/vendor/aladin-lite-3.3.0/aladin.js" charset="utf-8"></script>
 
   <script>
   (function () {
@@ -98,7 +98,8 @@
     // Toggles
     const showStars = (p.get("stars") ?? "1") !== "0";
     const showConstLabels = (p.get("const") ?? "1") !== "0";
-    const showLines = (p.get("lines") ?? "1") !== "0";
+    // The optional JAXA layer depends on the unavailable CDS registry.
+    const showLines = p.get("lines") === "1";
 
     // Density controls (optional global cap)
     const magLimit = toNum(p.get("mag"), null);              // keep mag_v <= magLimit if provided
