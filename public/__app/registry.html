@@ -177,6 +177,7 @@
     <!-- <a href="/legal/disclaimer/" class="muted">Disclaimer</a> -->
   </footer>
 
+  <script src="/assets/js/map-coordinates.js?v=1"></script>
   <script>
   (function(){
     function $(id){ return document.getElementById(id); }
@@ -234,10 +235,8 @@
 
       if(!btn || !wrap || !frame) return;
 
-      var raHms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.ra_hms;
-      var decDms = entry && entry.object && entry.object.coordinates && entry.object.coordinates.dec_dms;
-
-      if(!raHms || !decDms){
+      var position = TSRCMapCoordinates.forEntry(entry);
+      if(!position){
         btn.disabled = true;
         btn.textContent = "Map unavailable";
         wrap.style.display = "none";
@@ -249,22 +248,8 @@
         }
         return;
       }
-
-      var raDeg = hmsToDeg(raHms);
-      var decDeg = dmsToDeg(decDms);
-
-      if(!isFinite(raDeg) || !isFinite(decDeg)){
-        btn.disabled = true;
-        btn.textContent = "Map unavailable";
-        wrap.style.display = "none";
-        if(insEl){
-          insEl.onclick = null;
-          insEl.onkeydown = null;
-          insEl.setAttribute("aria-disabled", "true");
-          insEl.style.cursor = "default";
-        }
-        return;
-      }
+      var raDeg = position.raDeg;
+      var decDeg = position.decDeg;
 
       var label =
         (insName && String(insName).trim()) ? String(insName).trim()

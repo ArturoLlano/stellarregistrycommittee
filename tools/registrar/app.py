@@ -16,6 +16,7 @@ from registrar.repo import detect_repo_context
 from registrar.schema import build_entry_payload
 from registrar.util import iso_utc_now, safe_int
 from registrar.vizier import fetch_sao_metadata_best_effort
+from registrar.preview_editor import apply_edits, editor_fields
 
 from datetime import date
 
@@ -128,17 +129,37 @@ def preview():
     payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
     payload_b64 = base64.b64encode(payload_json.encode("utf-8")).decode("ascii")
 
+    return _render_editor(ctx, payload, lookup_error=lookup_error)
+
+
+def _render_editor(ctx, payload, *, lookup_error=None, editor_error=None, submitted=None, reviewed=False):
+    payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
     return render_template(
         "preview.html",
-        repo_root=str(ctx.repo_root),
-        entries_dir=str(ctx.entries_dir),
-        payload_json=payload_json,
-        payload_b64=payload_b64,
-        entry_id=payload["id"],
-        sao=sao,
-        lookup_error=lookup_error,
-        form=form,
+        repo_root=str(ctx.repo_root), entries_dir=str(ctx.entries_dir),
+        entry_id=payload["id"], payload_json=payload_json,
+        payload_b64=base64.b64encode(payload_json.encode("utf-8")).decode("ascii"),
+        editor_fields=editor_fields(payload, submitted),
+        certificate_legend=payload.get("certificate", {}).get("legend_en"),
+        lookup_error=lookup_error, editor_error=editor_error, reviewed=reviewed,
     )
+
+
+@app.post("/review")
+def review():
+    ctx = detect_repo_context()
+    if not ctx.ok:
+        return render_template("error.html", title="Repository not detected", detail=ctx.error), 400
+    try:
+        payload = json.loads(base64.b64decode(request.form.get("payload_b64", "")).decode("utf-8"))
+    except Exception:
+        return render_template("error.html", title="Invalid payload", detail="No se pudo leer la vista previa."), 400
+    try:
+        edited = apply_edits(payload, request.form)
+    except ValueError as error:
+        return _render_editor(ctx, payload, editor_error=str(error), submitted=request.form), 400
+    return _render_editor(ctx, edited, reviewed=True)
+
 
 
 def _git_add_paths(repo_root: Path, rel_paths_posix: list[str]) -> None:
@@ -205,6 +226,12 @@ def commit():
         payload = json.loads(payload_json)
     except Exception as e:
         return render_template("error.html", title="Invalid payload", detail=str(e)), 400
+
+    try:
+        payload = apply_edits(payload, request.form)
+    except ValueError as error:
+        return _render_editor(ctx, payload, editor_error=str(error), submitted=request.form), 400
+    payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
 
     entry_id = (payload.get("id") or "").strip()
     sao_str = None

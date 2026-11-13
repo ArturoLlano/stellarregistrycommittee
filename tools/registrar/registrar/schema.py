@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from copy import deepcopy
 
 from .util import random_suffix
 from .vizier import compute_constellation_best_effort
@@ -224,6 +225,10 @@ def build_entry_payload(
     else:
         obj["coordinates"] = {"epoch": "J2000", "ra_hms": "", "dec_dms": ""}
         payload["notes"] = ["Coordinates not retrieved at registration time."]
+
+    # Independent coordinates for map placement; certificate coordinates stay unchanged.
+    if obj["coordinates"].get("ra_hms") and obj["coordinates"].get("dec_dms"):
+        obj["coordinatesV"] = deepcopy(obj["coordinates"])
 
     # Enrichment blocks
     if sao_meta:

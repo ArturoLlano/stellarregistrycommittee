@@ -33,6 +33,7 @@
   -->
   <script src="/assets/vendor/aladin-lite-3.3.0/aladin.js" charset="utf-8"></script>
 
+  <script src="/assets/js/map-coordinates.js?v=1"></script>
   <script>
   (function () {
     "use strict";
@@ -184,31 +185,17 @@
 
             const entry = await r.json();
 
-            // Support new schema (entry.object.coordinates) + older (entry.coordinates) + fallback
-            const coo = entry?.object?.coordinates || entry?.coordinates || {};
-
-            const ra =
-              (coo && (coo.ra_hms || coo.ra)) ||
-              entry?.ra_hms || entry?.ra || null;
-
-            const dec =
-              (coo && (coo.dec_dms || coo.dec)) ||
-              entry?.dec_dms || entry?.dec || null;
-
-            const raDeg = (typeof coo.ra_deg === "number") ? coo.ra_deg : (typeof entry?.ra_deg === "number" ? entry.ra_deg : null);
-            const decDeg = (typeof coo.dec_deg === "number") ? coo.dec_deg : (typeof entry?.dec_deg === "number" ? entry.dec_deg : null);
-
-            let targetStr = null;
-            if (ra && dec) targetStr = `${ra} ${dec}`;
-            else if (Number.isFinite(raDeg) && Number.isFinite(decDeg)) targetStr = `${raDeg} ${decDeg}`;
-
-            if (targetStr) aladin.gotoObject(targetStr);
+            const position = TSRCMapCoordinates.forEntry(entry);
+            if (position) {
+              aladin.gotoRaDec(position.raDeg, position.decDeg);
+              return { entry, position };
+            }
           } catch (e) {
             // silent
           }
         }
 
-        if (idParam) await recenterFromId(idParam);
+        const entryTarget = idParam ? await recenterFromId(idParam) : null;
 
         // ---------- constellation lines overlay (HiPS) + auto-hide on tight FOV ----------
         let constLines = null;
@@ -259,9 +246,9 @@
 
         // ---------- featured star (from URL) ----------
         // Use: ?ra=<deg>&dec=<deg>&star=Name&sao=...&inscription=...
-        const starName = (p.get("star") ?? "").trim();
-        const starRA = (raQ !== null) ? Number(raQ) : null;
-        const starDEC = (decQ !== null) ? Number(decQ) : null;
+        const starName = (p.get("star") ?? entryTarget?.entry?.object?.inscription?.name ?? "").trim();
+        const starRA = entryTarget ? entryTarget.position.raDeg : ((raQ !== null) ? Number(raQ) : null);
+        const starDEC = entryTarget ? entryTarget.position.decDeg : ((decQ !== null) ? Number(decQ) : null);
 
         if (starName && Number.isFinite(starRA) && Number.isFinite(starDEC)) {
           const featuredCat = A.catalog({

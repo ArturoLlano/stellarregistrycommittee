@@ -1,33 +1,35 @@
 {% extends "base.html" %}
-{% set title = "Preview — Registrar" %}
-
+{% set title = "Revisar certificado — Registrar" %}
 {% block content %}
-  <section class="card">
-    <h1>Preview JSON</h1>
-
-    <div class="meta">
-      <div><strong>Repo root:</strong> <code>{{ repo_root }}</code></div>
-      <div><strong>Entries dir:</strong> <code>{{ entries_dir }}</code></div>
-      <div><strong>Generated ID:</strong> <code>{{ entry_id }}</code></div>
-      <div><strong>Registry URL:</strong> <code>/registry/{{ entry_id }}</code></div>
-      <div><strong>QR URL:</strong> <code>/r/{{ entry_id }}</code></div>
+<section class="card">
+  <h1>Revisar datos del certificado</h1>
+  <p class="muted">Los datos están precargados. Puedes conservarlos o corregirlos antes de generar el certificado.</p>
+  <div class="meta"><div><strong>Identificador:</strong> <code>{{ entry_id }}</code></div></div>
+  {% if lookup_error %}<div class="alert alert--warn">No se pudieron obtener todos los datos del catálogo: {{ lookup_error }}. Puedes completarlos aquí.</div>{% endif %}
+  {% if editor_error %}<div class="alert alert--error" role="alert">{{ editor_error }}</div>{% endif %}
+  {% if reviewed %}<div class="alert alert--ok" role="status">Vista previa actualizada. Aún no se ha creado ni publicado el certificado.</div>{% endif %}
+  <form method="post" action="/commit" class="form">
+    <input type="hidden" name="payload_b64" value="{{ payload_b64 }}" />
+    <input type="hidden" name="editor_version" value="1" />
+    <h2>Inscripción y datos de la estrella</h2>
+    <div class="grid">
+    {% for field in editor_fields %}
+      <label for="edit-{{ field.name }}">
+        <span>{{ field.label }}{% if field.required %}<span class="req">*</span>{% endif %}</span>
+        <input id="edit-{{ field.name }}" name="{{ field.name }}" type="{{ field.type }}" value="{{ field.value }}" {% if field.type == 'number' %}step="any"{% endif %} {% if field.required %}required{% endif %} />
+      </label>
+    {% endfor %}
     </div>
-
-    {% if lookup_error %}
-      <div class="alert alert--warn">
-        <strong>Coordinate lookup warning:</strong> {{ lookup_error }}<br/>
-        The entry will still be created, but coordinates may be blank.
-      </div>
-    {% endif %}
-
-    <pre class="code">{{ payload_json }}</pre>
-
-    <form method="post" action="/commit">
-      <input type="hidden" name="payload_b64" value="{{ payload_b64 }}" />
-      <div class="actions">
-        <button type="button" class="btn btn--ghost" onclick="history.back()">Back</button>
-        <button type="submit" class="btn">Confirm & Commit</button>
-      </div>
-    </form>
-  </section>
+    <p class="small">El SAO y el identificador permanecen fijos. Las coordenadas se expresan en J2000. Los campos «Mapa» se guardan en coordinatesV y solo controlan el centro y el círculo del mapa. Si dejas ambos vacíos, se usarán las coordenadas normales. Los cambios del catálogo se guardan como correcciones manuales.</p>
+    <h2>Texto del certificado</h2>
+    <p>{{ certificate_legend or 'Se generará con los datos disponibles.' }}</p>
+    <p class="small">Pulsa «Actualizar vista previa» para revisar el texto tras editar. Al confirmar también se aplican los cambios pendientes.</p>
+    <div class="actions" style="flex-wrap:wrap">
+      <button type="button" class="btn btn--ghost" onclick="history.back()">Volver</button>
+      <button type="submit" class="btn btn--ghost" formaction="/review">Actualizar vista previa</button>
+      <button type="submit" class="btn">Generar y publicar certificado</button>
+    </div>
+  </form>
+  <details style="margin-top:20px"><summary>Ver datos completos (JSON)</summary><pre class="code">{{ payload_json }}</pre></details>
+</section>
 {% endblock %}
